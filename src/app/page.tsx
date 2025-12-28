@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image'; // ✅ import Next.js Image
 import { useProducts } from '@/hooks/useProducts';
 import { ProductCard } from '@/components/product/ProductCard';
 import { STORE_NAME, CATEGORIES } from '@/lib/constants';
@@ -14,9 +15,12 @@ export default function HomePage() {
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/30 z-10" />
 
-        <img
+        {/* ✅ Next.js Image instead of <img> */}
+        <Image
           src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600"
           alt="Fashion store hero"
+          fill
+          priority
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -46,10 +50,11 @@ export default function HomePage() {
               href={`/shop?category=${category.id}`}
               className="group relative h-80 overflow-hidden rounded-xl"
             >
-              {/* Image */}
-              <img
+              {/* ✅ Next.js Image instead of <img> */}
+              <Image
                 src={category.image}
                 alt={category.label}
+                fill
                 className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
               />
 

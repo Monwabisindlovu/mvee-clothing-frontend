@@ -5,8 +5,9 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/common/Card';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
+import Image from 'next/image'; // ✅ import Next.js Image
 
-import { ShoppingBag, Eye } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { Product } from '@/types/product';
 
 interface ProductCardProps {
@@ -19,7 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
   const [selectedImage, setSelectedImage] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const images = product.images || [product.image];
+  const images = product.images || [product.image || '/placeholder.png'];
   const mainImage = images[selectedImage];
 
   // Auto-switch images every 3 seconds
@@ -44,9 +45,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
     >
       <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all bg-white">
         <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
-          <img
+          {/* ✅ Next.js Image instead of <img> */}
+          <Image
             src={mainImage}
-            alt={product.name}
+            alt={product.name || 'Unnamed Product'}
+            width={400}
+            height={400}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
@@ -68,10 +72,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
             className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent"
           >
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="ghost" // ✅ valid
-              >
+              <Button size="sm" variant="ghost">
                 Quick View
               </Button>
 
