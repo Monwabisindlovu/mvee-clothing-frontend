@@ -1,5 +1,5 @@
 import { useCartContext } from '@/context/CartContext';
 
-export const useCart = () => {
+export default function useCart() {
   return useCartContext();
-};
+}

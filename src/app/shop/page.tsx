@@ -12,16 +12,7 @@ export default function ShopPage() {
       {products.map(product => (
         <ProductCard
           key={product.id}
-          product={{
-            id: product.id,
-            name: product.name || 'Unnamed Product',
-            price: product.price || 0,
-            image: product.image || '/Slim-Jeans.png',
-            category: product.category || 'men',
-            slug: product.slug,
-            description: product.description,
-            isActive: product.isActive,
-          }}
+          product={product} // ✅ pass the full product object
         />
       ))}
     </div>

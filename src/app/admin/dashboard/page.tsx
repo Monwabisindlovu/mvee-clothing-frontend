@@ -1,12 +1,12 @@
-import AdminGuard from '@/components/admin/AdminGuard';
+'use client';
 
-export default function AdminDashboardPage() {
+import React from 'react';
+
+export default function DashboardPage() {
   return (
-    <AdminGuard>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="mt-2 text-gray-600">Manage products, stock, and store settings.</p>
-      </div>
-    </AdminGuard>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      {/* Add your dashboard components here */}
+    </div>
   );
 }

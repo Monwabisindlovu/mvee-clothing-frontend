@@ -1,6 +1,6 @@
 'use client';
 
-import { useCart } from '@/hooks/useCart';
+import useCart from '@/hooks/useCart';
 
 export default function CartSummary() {
   const { total } = useCart();

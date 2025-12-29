@@ -1,4 +1,3 @@
-// src/hooks/useProducts.ts
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,53 +19,57 @@ export function useProducts(filters: ProductFilters = {}) {
       try {
         setIsLoading(true);
 
-        // Mock products
         const allProducts: Product[] = [
           {
             id: '1',
             name: 'Classic T-shirt',
+            slug: 'classic-tshirt',
             price: 299,
             image: '/mens-t-shirt.png',
+            images: ['/mens-t-shirt.png', '/mens-t-shirt.png'],
             category: 'men',
-            isActive: true,
-            stock: 10,
+            subcategory: 'tshirts',
+            description: 'A premium cotton classic T-shirt suitable for everyday wear.',
+            sizes: ['S', 'M', 'L', 'XL'],
+            colors: ['Black', 'White', 'Grey'],
+            stock: 50,
             featured: true,
-            slug: 'classic-tshirt',
-            sizes: ['S', 'M', 'L'],
-            colors: ['red', 'blue'],
-            images: [],
+            isActive: true,
           },
           {
             id: '2',
             name: 'Slim Jeans',
+            slug: 'slim-jeans',
             price: 499,
             image: '/Slim-Jeans.png',
+            images: ['/Slim-Jeans.png', '/Slim-Jeans.png'],
             category: 'women',
-            isActive: true,
-            stock: 5,
+            subcategory: 'jeans',
+            description: 'Modern slim-fit jeans designed for comfort and style.',
+            sizes: ['S', 'M', 'L'],
+            colors: ['Black', 'Blue'],
+            stock: 15,
             featured: false,
-            slug: 'slim-jeans',
-            sizes: ['S', 'M'],
-            colors: ['black', 'blue'],
-            images: [],
+            isActive: true,
           },
           {
             id: '3',
             name: 'Kids Hoodie',
+            slug: 'kids-hoodie',
             price: 199,
             image: '/Kids Hoodie.png',
+            images: ['/Kids Hoodie.png', '/Kids Hoodie.png'],
             category: 'kids',
-            isActive: true,
+            subcategory: 'hoodies',
+            description: 'Warm and comfortable hoodie for kids.',
+            sizes: ['XS', 'S'],
+            colors: ['Yellow', 'Green'],
             stock: 0,
             featured: true,
-            slug: 'kids-hoodie',
-            sizes: ['XS', 'S'],
-            colors: ['yellow', 'green'],
-            images: [],
+            isActive: true,
           },
         ];
 
-        // Apply filters
         const filtered = allProducts.filter(product => {
           if (
             filters.category &&
@@ -75,12 +78,15 @@ export function useProducts(filters: ProductFilters = {}) {
           ) {
             return false;
           }
-          if (filters.inStock && (product.stock ?? 0) <= 0) {
+
+          if (filters.inStock && product.stock <= 0) {
             return false;
           }
+
           if (filters.featured && !product.featured) {
             return false;
           }
+
           return product.isActive !== false;
         });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { CartItem as Item } from '@/types/cart';
-import { useCart } from '@/hooks/useCart';
+import useCart from '@/hooks/useCart';
 
 export default function CartItem({ item, index }: { item: Item; index: number }) {
   const { updateQuantity, removeItem } = useCart();

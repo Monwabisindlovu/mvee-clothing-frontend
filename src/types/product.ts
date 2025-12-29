@@ -1,21 +1,16 @@
-// src/types/product.ts
-
-export type ProductCategory = 'men' | 'women' | 'kids';
-
 export type Product = {
-  description: any;
-  subcategory: string;
-  featured: any;
   id: string;
   name: string;
   slug: string;
   price: number;
   image: string;
   images: string[];
-  category: ProductCategory;
+  category: 'men' | 'women' | 'kids';
+  subcategory: string;
+  description: string;
   sizes: string[];
   colors: string[];
   stock: number;
+  featured: boolean;
   isActive: boolean;
-  in_stock?: boolean;
 };

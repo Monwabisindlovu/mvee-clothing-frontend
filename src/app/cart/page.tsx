@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useCart } from '@/hooks/useCart';
+import useCart from '@/hooks/useCart';
+
 import CartItem from '@/components/cart/CartItem';
 import CartSummary from '@/components/cart/CartSummary';
 import { buildWhatsAppMessage, getWhatsAppUrl } from '@/lib/whatsapp';

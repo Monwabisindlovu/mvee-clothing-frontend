@@ -7,7 +7,7 @@ import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/common/Button';
-import { useCart } from '@/hooks/useCart';
+import useCart from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
 import { STORE_NAME, CATEGORIES } from '@/lib/constants';
 
