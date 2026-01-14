@@ -1,24 +1,22 @@
-import * as React from 'react';
-import clsx from 'clsx';
+import * as React from "react"
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+import { cn } from "@/lib/utils"
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
     return (
       <input
-        ref={ref}
-        className={clsx(
-          'w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm',
-          'placeholder:text-neutral-400',
-          'focus:outline-none focus:ring-2 focus:ring-black focus:border-black',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
           className
         )}
+        ref={ref}
         {...props}
       />
-    );
+    )
   }
-);
+)
+Input.displayName = "Input"
 
-Input.displayName = 'Input';
+export { Input }

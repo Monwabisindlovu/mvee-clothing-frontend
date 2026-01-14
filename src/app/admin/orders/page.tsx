@@ -25,7 +25,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
+import { Modal } from '@/components/ui/modal';
 
 /* -------------------------------------------------------------------------- */
 /* TYPES */
