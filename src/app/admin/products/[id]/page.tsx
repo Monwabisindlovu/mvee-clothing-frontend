@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
+import ProductForm from '@/components/admin/ProductForm';
 
-export default function ProductDetailPage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
-      {/* Add product edit form or details here */}
-    </div>
-  );
+interface ProductPageProps {
+  params: { id: string };
+}
+
+export default function EditProductPage({ params }: ProductPageProps) {
+  return <ProductForm productId={params.id} />;
 }

@@ -1,98 +1,169 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // ✅ import Next.js Image
-import { useProducts } from '@/hooks/useProducts';
-import { ProductCard } from '@/components/product/ProductCard';
-import { STORE_NAME, CATEGORIES } from '@/lib/constants';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Truck, Shield, RefreshCw, Star } from 'lucide-react';
+
+import Header from '@/components/store/Header';
+import Footer from '@/components/store/Footer';
+
+import FeaturedCarousel from '@/components/store/FeaturedCarousel';
+import CategoryBanner from '@/components/store/CategoryBanner';
+import ProductCard from '@/components/store/ProductCard';
+import CartDrawer from '@/components/store/CartDrawer';
+import QuickViewModal from '@/components/store/QuickViewModal';
+import Button from '@/components/ui/Button';
+import Hero from '@/components/store/HeroSection';
+
+import { productService } from '@/services/product.service';
+import type { Product } from '@/types/product';
 
 export default function HomePage() {
-  const { products, isLoading } = useProducts({ featured: true });
+  const [cart, setCart] = useState<any[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+
+  /* ------------------ Cart persistence ------------------ */
+  useEffect(() => {
+    const saved = localStorage.getItem('mvee_cart');
+    if (saved) setCart(JSON.parse(saved));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('mvee_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  /* ------------------ Products ------------------ */
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: productService.getAll,
+  });
+
+  const featuredProducts = products.filter(p => p.is_featured);
+  const promotionProducts = products.filter(p => p.is_on_promotion);
+
+  /* ------------------ Cart actions ------------------ */
+  const addToCart = (product: Product) => {
+    setCart(prev => [
+      ...prev,
+      {
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price,
+        quantity: 1,
+        size: product.sizes?.[0] ?? '',
+        color: product.colors?.[0]?.name ?? '',
+        image: product.images?.[0]?.url ?? '',
+      },
+    ]);
+    setIsCartOpen(true);
+  };
+
+  const updateQuantity = (index: number, quantity: number) => {
+    if (quantity < 1) return;
+    setCart(prev => prev.map((item, i) => (i === index ? { ...item, quantity } : item)));
+  };
+
+  const removeFromCart = (index: number) => {
+    setCart(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const avgRating = '5.0';
 
   return (
-    <div className="bg-stone-50">
-      {/* ================= HERO ================= */}
-      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/30 z-10" />
+    <>
+      <Header cartCount={cart.length} onCartClick={() => setIsCartOpen(true)} />
 
-        {/* ✅ Next.js Image instead of <img> */}
-        <Image
-          src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600"
-          alt="Fashion store hero"
-          fill
-          priority
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+      <main>
+        <Hero />
 
-        <div className="relative z-20 text-center px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">{STORE_NAME}</h1>
-          <p className="text-white/80 max-w-xl mx-auto mb-8">
-            Premium fashion for men, women, and kids. Pay on delivery.
-          </p>
-
-          <Link
-            href="/shop"
-            className="inline-block px-10 py-3 bg-white text-stone-900 rounded-full font-medium hover:bg-stone-100 transition"
-          >
-            Shop Now
-          </Link>
-        </div>
-      </section>
-
-      {/* ================= CATEGORIES ================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-20">
-        <h2 className="text-2xl font-semibold mb-10">Shop by Category</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {CATEGORIES.map(category => (
-            <Link
-              key={category.id}
-              href={`/shop?category=${category.id}`}
-              className="group relative h-80 overflow-hidden rounded-xl"
-            >
-              {/* ✅ Next.js Image instead of <img> */}
-              <Image
-                src={category.image}
-                alt={category.label}
-                fill
-                className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-              />
-
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/30" />
-
-              {/* Text */}
-              <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-2xl font-semibold mb-1">{category.label}</h3>
-                <span className="text-sm underline underline-offset-4">Shop {category.label}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ================= FEATURED PRODUCTS ================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-semibold">Featured Products</h2>
-
-          <Link href="/shop" className="text-sm font-medium text-stone-700 hover:text-stone-900">
-            View all →
-          </Link>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-20 text-stone-500">Loading products…</div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-20 text-stone-500">No featured products</div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.slice(0, 8).map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+        {/* Feature strip */}
+        <section className="bg-black text-white py-6">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <Feature icon={<Truck />} label="FREE DELIVERY R500+" />
+            <Feature icon={<Shield />} label="PAY ON DELIVERY" />
+            <Feature icon={<RefreshCw />} label="EASY RETURNS" />
+            <Feature icon={<Star />} label={`${avgRating} RATING`} />
           </div>
+        </section>
+
+        {/* Featured */}
+        {featuredProducts.length > 0 && (
+          <FeaturedCarousel
+            title="New Arrivals"
+            subtitle="JUST DROPPED"
+            products={featuredProducts}
+            onQuickView={setQuickViewProduct}
+            onAddToCart={addToCart}
+          />
         )}
-      </section>
+
+        <CategoryBanner />
+
+        {/* Promotions */}
+        {promotionProducts.length > 0 && (
+          <FeaturedCarousel
+            title="On Sale"
+            subtitle="LIMITED TIME OFFERS"
+            products={promotionProducts}
+            onQuickView={setQuickViewProduct}
+            onAddToCart={addToCart}
+          />
+        )}
+
+        {/* Popular products */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Popular Items</h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {products.slice(0, 8).map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onQuickView={setQuickViewProduct}
+                  onAddToCart={() => addToCart(product)}
+                />
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <Link href="/shop">
+                <Button className="px-12 py-4 tracking-widest">VIEW ALL PRODUCTS</Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        onUpdateQuantity={updateQuantity}
+        onRemoveItem={removeFromCart}
+      />
+
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        onAddToCart={addToCart}
+      />
+    </>
+  );
+}
+
+/* ------------------ Helper ------------------ */
+function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="w-6 h-6">{icon}</div>
+      <span className="text-xs tracking-wide">{label}</span>
     </div>
   );
 }
