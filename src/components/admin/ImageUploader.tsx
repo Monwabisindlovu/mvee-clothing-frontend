@@ -1,14 +1,13 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { X, ImagePlus, Loader2 } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { X, ImagePlus } from 'lucide-react';
 import type { ProductImage } from '@/types/product';
 
 interface ImageUploaderProps {
   value: ProductImage[];
   onChange: (images: ProductImage[]) => void;
-  uploadFile?: (file: File) => Promise<string>; // optional: for real backend upload
+  uploadFile?: (file: File) => Promise<string>;
 }
 
 export default function ImageUploader({ value, onChange, uploadFile }: ImageUploaderProps) {
@@ -18,20 +17,22 @@ export default function ImageUploader({ value, onChange, uploadFile }: ImageUplo
   const handleFiles = async (files: FileList | null) => {
     if (!files) return;
 
-    const filesArray = Array.from(files);
     setUploading(true);
 
     try {
       const uploaded: ProductImage[] = [];
 
-      for (const file of filesArray) {
+      for (const file of Array.from(files)) {
         let url: string;
 
         if (uploadFile) {
-          // Use your backend uploader if provided
-          url = await uploadFile(file);
+          try {
+            url = await uploadFile(file);
+          } catch (err) {
+            console.error('Upload failed, using preview instead:', err);
+            url = URL.createObjectURL(file);
+          }
         } else {
-          // Fallback: temporary preview
           url = URL.createObjectURL(file);
         }
 
@@ -43,8 +44,6 @@ export default function ImageUploader({ value, onChange, uploadFile }: ImageUplo
       }
 
       onChange([...value, ...uploaded]);
-    } catch (err) {
-      console.error(err);
     } finally {
       setUploading(false);
     }
@@ -62,7 +61,8 @@ export default function ImageUploader({ value, onChange, uploadFile }: ImageUplo
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-2 text-sm text-primary hover:underline"
+          className="flex items-center gap-2 text-sm text-primary hover:underline disabled:opacity-50"
+          disabled={uploading}
         >
           <ImagePlus className="h-4 w-4" />
           {uploading ? 'Uploading...' : 'Add images'}

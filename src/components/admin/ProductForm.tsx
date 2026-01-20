@@ -1,13 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Save } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 import SizeSelector from '@/components/admin/SizeSelector';
 import ColorSelector, { ColorValue } from '@/components/admin/ColorSelector';
@@ -15,19 +26,21 @@ import ImageUploader from '@/components/admin/ImageUploader';
 
 import { productService } from '@/services/product.service';
 import type { Product, ProductImage } from '@/types/product';
-import { base44 } from '@/api/base44Client';
+
+const CATEGORIES = ['men', 'women', 'kids'];
+const TYPES = ['shoes', 't-shirts', 'jeans', 'hoodies', 'dresses', 'sneakers'];
 
 interface ProductFormProps {
   productId?: string;
 }
 
-interface ProductFormData {
+interface FormState {
   name: string;
   description: string;
+  category: string;
+  type: string;
   price: string;
   original_price: string;
-  category: string;
-  subcategory: string;
   images: ProductImage[];
   sizes: string[];
   colors: ColorValue[];
@@ -41,13 +54,13 @@ export default function ProductForm({ productId }: ProductFormProps) {
   const queryClient = useQueryClient();
   const isEditing = Boolean(productId);
 
-  const [form, setForm] = useState<ProductFormData>({
+  const [form, setForm] = useState<FormState>({
     name: '',
     description: '',
+    category: '',
+    type: '',
     price: '',
     original_price: '',
-    category: '',
-    subcategory: '',
     images: [],
     sizes: [],
     colors: [],
@@ -56,15 +69,12 @@ export default function ProductForm({ productId }: ProductFormProps) {
     is_on_promotion: false,
   });
 
-  /* ----------------------------- fetch product ----------------------------- */
+  /* -------------------------------- fetch -------------------------------- */
 
   const { data: product, isLoading } = useQuery<Product | null>({
     queryKey: ['product', productId],
     enabled: !!productId,
-    queryFn: async () => {
-      const p = await productService.getById(productId!);
-      return p ?? null;
-    },
+    queryFn: () => productService.getById(productId!),
   });
 
   useEffect(() => {
@@ -73,10 +83,10 @@ export default function ProductForm({ productId }: ProductFormProps) {
     setForm({
       name: product.name,
       description: product.description ?? '',
+      category: product.category,
+      type: product.type ?? '',
       price: String(product.price),
       original_price: product.original_price ? String(product.original_price) : '',
-      category: product.category,
-      subcategory: '',
       images: product.images ?? [],
       sizes: product.sizes ?? [],
       colors: product.colors ?? [],
@@ -86,10 +96,10 @@ export default function ProductForm({ productId }: ProductFormProps) {
     });
   }, [product]);
 
-  /* ---------------------------- mutations --------------------------- */
+  /* ------------------------------ mutations ------------------------------- */
 
-  const createMutation = useMutation<unknown, Error, Partial<Product>>({
-    mutationFn: data => productService.create(data),
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Product>) => productService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success('Product created');
@@ -108,23 +118,27 @@ export default function ProductForm({ productId }: ProductFormProps) {
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  /* ----------------------------- submit ---------------------------- */
+  /* -------------------------------- submit -------------------------------- */
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
 
-    if (!form.name || !form.price || !form.category) {
-      toast.error('Missing required fields');
+    if (!form.name || !form.price || !form.category || !form.type) {
+      toast.error('Please fill required fields');
       return;
     }
 
     const payload: Partial<Product> = {
       name: form.name,
       description: form.description,
+      category: form.category,
+      type: form.type,
       price: Number(form.price),
       original_price: form.original_price ? Number(form.original_price) : null,
-      category: form.category,
-      images: form.images,
+      images: form.images.map((img, index) => ({
+        ...img,
+        is_main: index === 0,
+      })),
       sizes: form.sizes,
       colors: form.colors,
       in_stock: form.in_stock,
@@ -145,124 +159,218 @@ export default function ProductForm({ productId }: ProductFormProps) {
 
   return (
     <div className="min-h-screen bg-neutral-50">
+      {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">{isEditing ? 'Edit Product' : 'Add New Product'}</h1>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold">{isEditing ? 'Edit Product' : 'Add Product'}</h1>
+          </div>
           <Button onClick={handleSubmit} disabled={isPending}>
-            <Save className="w-4 h-4 mr-2" />
+            {isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
             {isEditing ? 'Update' : 'Create'}
           </Button>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        {/* Images */}
-        <Card>
-          <div className="p-4 border-b font-semibold">Images</div>
-          <div className="p-4">
-            <ImageUploader
-              value={form.images}
-              onChange={images => setForm(f => ({ ...f, images }))}
-              uploadFile={async (file: File) => {
-                // Replace with your actual uploader
-                const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                return file_url;
-              }}
-            />
-          </div>
-        </Card>
+      {/* Layout */}
+      <main className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* LEFT */}
+        <div className="lg:col-span-2 space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Product Name *</Label>
+                <Input
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                />
+              </div>
 
-        {/* Sizes */}
-        <Card>
-          <div className="p-4 border-b font-semibold">Sizes</div>
-          <div className="p-4">
-            <SizeSelector value={form.sizes} onChange={sizes => setForm(f => ({ ...f, sizes }))} />
-          </div>
-        </Card>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  rows={4}
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                />
+              </div>
 
-        {/* Colors */}
-        <Card>
-          <div className="p-4 border-b font-semibold">Colors</div>
-          <div className="p-4">
-            <ColorSelector
-              value={form.colors}
-              onChange={colors => setForm(f => ({ ...f, colors }))}
-            />
-          </div>
-        </Card>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Category *</Label>
+                  <Select
+                    value={form.category}
+                    onValueChange={v => setForm(f => ({ ...f, category: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-        {/* Basic Info */}
-        <Card>
-          <div className="p-4 border-b font-semibold">Product Info</div>
-          <div className="p-4 space-y-4">
-            <input
-              className="w-full border rounded px-3 py-2"
-              placeholder="Product Name"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            />
-            <textarea
-              className="w-full border rounded px-3 py-2"
-              placeholder="Description"
-              value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            />
-            <div className="flex gap-2">
-              <input
-                className="flex-1 border rounded px-3 py-2"
-                placeholder="Price"
-                type="number"
-                value={form.price}
-                onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                <div>
+                  <Label>Type *</Label>
+                  <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TYPES.map(t => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Sizes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SizeSelector
+                value={form.sizes}
+                onChange={sizes => setForm(f => ({ ...f, sizes }))}
               />
-              <input
-                className="flex-1 border rounded px-3 py-2"
-                placeholder="Original Price"
-                type="number"
-                value={form.original_price}
-                onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))}
-              />
-            </div>
-            <input
-              className="w-full border rounded px-3 py-2"
-              placeholder="Category"
-              value={form.category}
-              onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-            />
-          </div>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Toggles */}
-        <Card>
-          <div className="p-4 border-b font-semibold">Options</div>
-          <div className="p-4 flex flex-col gap-2">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Colors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ColorSelector
+                value={form.colors}
+                onChange={colors => setForm(f => ({ ...f, colors }))}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT */}
+        <div className="space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pricing</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Price (R) *</Label>
+                <Input
+                  type="number"
+                  value={form.price}
+                  onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <Label>Original Price (R)</Label>
+                <Input
+                  type="number"
+                  value={form.original_price}
+                  onChange={e =>
+                    setForm(f => ({
+                      ...f,
+                      original_price: e.target.value,
+                    }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Set higher than price to show discount
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <StatusRow
+                label="In Stock"
+                description="Product available for purchase"
                 checked={form.in_stock}
-                onChange={e => setForm(f => ({ ...f, in_stock: e.target.checked }))}
+                onChange={v => setForm(f => ({ ...f, in_stock: v }))}
               />
-              In Stock
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
+              <StatusRow
+                label="Featured"
+                description="Show in New Arrivals"
                 checked={form.is_featured}
-                onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
+                onChange={v => setForm(f => ({ ...f, is_featured: v }))}
               />
-              Featured
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
+              <StatusRow
+                label="On Sale"
+                description="Show in promotions"
                 checked={form.is_on_promotion}
-                onChange={e => setForm(f => ({ ...f, is_on_promotion: e.target.checked }))}
+                onChange={v => setForm(f => ({ ...f, is_on_promotion: v }))}
               />
-              On Promotion
-            </label>
-          </div>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* ✅ FIXED IMAGES CARD */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Images</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ImageUploader
+                value={form.images}
+                onChange={images => setForm(f => ({ ...f, images }))}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                First image will be the main product image
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </main>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+
+function StatusRow({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <Label>{label}</Label>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }

@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 
 import { base44 } from '@/api/base44Client';
-import Button from '@/components/ui/Button';
-import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 /* -------------------------------------------------------------------------- */
 /*                                Color Map                                   */

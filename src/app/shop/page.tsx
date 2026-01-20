@@ -11,7 +11,7 @@ import ProductCard from '@/components/store/ProductCard';
 import CartDrawer from '@/components/store/CartDrawer';
 import QuickViewModal from '@/components/store/QuickViewModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import {
   Select,

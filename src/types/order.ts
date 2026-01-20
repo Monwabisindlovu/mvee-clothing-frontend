@@ -12,6 +12,8 @@ export interface OrderItem {
 }
 
 export interface Order {
+  customer_name: ReactNode;
+  created_date: string | number | Date;
   id: string;
   user_id: string;
   items: OrderItem[];

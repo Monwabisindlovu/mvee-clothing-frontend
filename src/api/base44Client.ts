@@ -63,7 +63,7 @@ export const base44 = {
     },
 
     Order: {
-      async list(): ListResult<Order> {
+      async list(p0: string, p1: number): ListResult<Order> {
         await delay(300);
         return [
           {
@@ -73,13 +73,15 @@ export const base44 = {
             total: 1298,
             items: [],
             created_date: new Date().toISOString(),
+            user_id: '',
+            created_at: '',
           },
         ];
       },
     },
 
     Review: {
-      async list(): ListResult<Review> {
+      async list(p0: string, p1: number): ListResult<Review> {
         await delay(300);
         return [
           {

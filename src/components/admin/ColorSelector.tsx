@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 export interface ColorValue {
   name: string;

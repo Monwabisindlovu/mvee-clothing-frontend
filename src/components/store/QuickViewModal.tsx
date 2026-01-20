@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { X, ChevronLeft, ChevronRight, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import Button from '@/components/ui/Button'; // ✅ default import
+import { Button } from '@/components/ui/button';
+// ✅ default import
 
 import { createPageUrl } from '@/utils/index';
 import type { Product } from '@/types/product';

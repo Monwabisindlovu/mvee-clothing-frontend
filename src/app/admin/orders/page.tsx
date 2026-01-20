@@ -18,13 +18,11 @@ import {
   CheckCircle,
   XCircle,
   Phone,
-  MapPin,
-  MessageSquare,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import Card from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 
 /* -------------------------------------------------------------------------- */
@@ -55,7 +53,7 @@ interface Order {
 }
 
 /* -------------------------------------------------------------------------- */
-/* MOCK API (replace later with real service) */
+/* MOCK API (replace later) */
 /* -------------------------------------------------------------------------- */
 
 async function fetchOrders(): Promise<Order[]> {
@@ -145,10 +143,11 @@ export default function AdminOrdersPage() {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
           <Link href="/admin/dashboard">
-            <Button>
+            <Button size="icon" variant="ghost">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
+
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
             <h1 className="text-xl font-bold">Orders</h1>
@@ -163,7 +162,7 @@ export default function AdminOrdersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <input
               value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search by name or phone..."
               className="w-full border rounded-md pl-10 py-2"
             />
@@ -171,9 +170,7 @@ export default function AdminOrdersPage() {
 
           <select
             value={statusFilter}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-              setStatusFilter(e.target.value as any)
-            }
+            onChange={e => setStatusFilter(e.target.value as 'all' | OrderStatus)}
             className="border rounded-md px-3 py-2"
           >
             <option value="all">All statuses</option>
@@ -227,7 +224,7 @@ export default function AdminOrdersPage() {
 
                     <div className="text-right">
                       <p className="text-xl font-bold">R{order.total.toFixed(2)}</p>
-                      <Button onClick={() => setSelectedOrder(order)} className="mt-2">
+                      <Button onClick={() => setSelectedOrder(order)} className="mt-2" size="sm">
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </Button>
@@ -260,9 +257,9 @@ export default function AdminOrdersPage() {
       </main>
 
       {/* Modal */}
-      <Modal open={!!selectedOrder} onClose={() => setSelectedOrder(null)}>
+      <Modal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)}>
         {selectedOrder && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h2 className="text-lg font-bold">Order Details</h2>
             <p>
               <strong>Name:</strong> {selectedOrder.customer_name}

@@ -14,7 +14,7 @@ import CategoryBanner from '@/components/store/CategoryBanner';
 import ProductCard from '@/components/store/ProductCard';
 import CartDrawer from '@/components/store/CartDrawer';
 import QuickViewModal from '@/components/store/QuickViewModal';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import Hero from '@/components/store/HeroSection';
 
 import { productService } from '@/services/product.service';

@@ -3,16 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit, Trash2, ArrowLeft, Package } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ArrowLeft, Package, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { base44 } from '@/api/base44Client';
 
-import Button from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState('');
@@ -25,9 +31,7 @@ export default function AdminProductsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await base44.request('DELETE', `/products/${id}`);
-    },
+    mutationFn: (id: string) => base44.request('DELETE', `/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success('Product deleted');
@@ -35,9 +39,8 @@ export default function AdminProductsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      await base44.request('PATCH', `/products/${id}`, data);
-    },
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      base44.request('PATCH', `/products/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success('Product updated');
@@ -62,8 +65,8 @@ export default function AdminProductsPage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link href="/admin/dashboard">
-              <Button>
-                <ArrowLeft className="w-4 h-4" />
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-2">
@@ -94,19 +97,20 @@ export default function AdminProductsPage() {
             />
           </div>
 
-          <Select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="w-40"
-          >
-            <option value="all">All Categories</option>
-            <option value="men">Men</option>
-            <option value="women">Women</option>
-            <option value="kids">Kids</option>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="men">Men</SelectItem>
+              <SelectItem value="women">Women</SelectItem>
+              <SelectItem value="kids">Kids</SelectItem>
+            </SelectContent>
           </Select>
         </div>
 
-        {/* Products Table */}
+        {/* Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="p-12 text-center">Loading products…</div>
@@ -125,43 +129,71 @@ export default function AdminProductsPage() {
                   <th className="p-3 text-left">Product</th>
                   <th className="p-3">Category</th>
                   <th className="p-3">Price</th>
-                  <th className="p-3">Stock</th>
-                  <th className="p-3">Featured</th>
-                  <th className="p-3">Sale</th>
+                  <th className="p-3 text-center">Stock</th>
+                  <th className="p-3 text-center">Featured</th>
+                  <th className="p-3 text-center">Sale</th>
                   <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <AnimatePresence>
-                  {filteredProducts.map((product: any) => (
-                    <motion.tr
-                      key={product.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="border-t"
-                    >
+                {filteredProducts.map((product: any) => {
+                  const categoryLabel =
+                    product.category === 'men'
+                      ? 'Men'
+                      : product.category === 'women'
+                      ? 'Women'
+                      : product.category === 'kids'
+                      ? product.subcategory === 'boys'
+                        ? 'Boys'
+                        : product.subcategory === 'girls'
+                        ? 'Girls'
+                        : 'Kids'
+                      : product.category;
+
+                  return (
+                    <tr key={product.id} className="border-t hover:bg-neutral-50 transition-colors">
+                      {/* Product */}
                       <td className="p-3">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={product.images?.[0]}
-                            className="w-12 h-12 rounded object-cover"
-                          />
-                          <span className="font-medium">{product.name}</span>
+                        <div className="flex items-start gap-3">
+                          <div className="h-12 w-12 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
+                            <img
+                              src={
+                                product.images?.[0] ||
+                                'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100'
+                              }
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{product.name}</p>
+                            <p className="text-xs text-neutral-500 line-clamp-2">
+                              {product.description || 'No description'}
+                            </p>
+                          </div>
                         </div>
                       </td>
 
+                      {/* Category */}
                       <td className="p-3 text-center">
-                        <Badge>{product.category}</Badge>
+                        <Badge variant="outline">{categoryLabel}</Badge>
                       </td>
 
-                      <td className="p-3 text-center">R{product.price}</td>
-
+                      {/* Price */}
                       <td className="p-3 text-center">
-                        <input
-                          type="checkbox"
+                        <p className="font-medium">R{product.price?.toFixed(2)}</p>
+                        {product.original_price && product.original_price > product.price && (
+                          <p className="text-xs text-neutral-400 line-through">
+                            R{product.original_price.toFixed(2)}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Stock */}
+                      <td className="p-3 text-center">
+                        <Switch
                           checked={product.in_stock}
-                          onChange={() =>
+                          onCheckedChange={() =>
                             updateMutation.mutate({
                               id: product.id,
                               data: { in_stock: !product.in_stock },
@@ -170,58 +202,76 @@ export default function AdminProductsPage() {
                         />
                       </td>
 
+                      {/* Featured */}
                       <td className="p-3 text-center">
-                        <input
-                          type="checkbox"
+                        <Switch
                           checked={product.is_featured}
-                          onChange={() =>
+                          onCheckedChange={() =>
                             updateMutation.mutate({
                               id: product.id,
-                              data: { is_featured: !product.is_featured },
+                              data: {
+                                is_featured: !product.is_featured,
+                              },
                             })
                           }
                         />
                       </td>
 
+                      {/* Sale */}
                       <td className="p-3 text-center">
-                        <input
-                          type="checkbox"
+                        <Switch
                           checked={product.is_on_promotion}
-                          onChange={() =>
+                          onCheckedChange={() =>
                             updateMutation.mutate({
                               id: product.id,
-                              data: { is_on_promotion: !product.is_on_promotion },
+                              data: {
+                                is_on_promotion: !product.is_on_promotion,
+                              },
                             })
                           }
                         />
                       </td>
 
+                      {/* Actions */}
                       <td className="p-3 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1">
+                          <Link href={`/products/${product.id}`}>
+                            <Button variant="ghost" size="icon">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
+
                           <Link href={`/admin/products/${product.id}`}>
-                            <Button>
+                            <Button variant="ghost" size="icon">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
 
                           <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-600"
                             onClick={() => {
                               if (confirm(`Delete ${product.name}?`)) {
                                 deleteMutation.mutate(product.id);
                               }
                             }}
                           >
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </div>
+
+        <p className="text-sm text-neutral-500 mt-4 text-center">
+          {filteredProducts.length} of {products.length} products
+        </p>
       </main>
     </div>
   );

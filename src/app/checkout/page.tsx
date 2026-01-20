@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import Header from '@/components/store/Header';
 import Footer from '@/components/store/Footer';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/textarea';
