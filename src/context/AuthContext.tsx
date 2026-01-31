@@ -1,46 +1,82 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type UserRole = 'admin' | 'user' | null;
+interface User {
+  id: string;
+  role: 'admin' | 'user';
+  name: string;
+  email: string;
+}
 
-interface AuthState {
-  role: UserRole;
-  loginAsAdmin: () => void;
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isAdmin: boolean;
+  loginAsAdmin: (token: string, user: User) => void;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthState | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<UserRole>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  /* -------------------------------------------------------------------------- */
-  /*                            Persisted session                               */
-  /* -------------------------------------------------------------------------- */
-
+  // Restore auth state on refresh
   useEffect(() => {
-    const storedRole = localStorage.getItem('role') as UserRole;
-    if (storedRole) setRole(storedRole);
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+
+    if (storedUser && storedToken) {
+      const parsedUser: User = JSON.parse(storedUser);
+      setUser(parsedUser);
+      setToken(storedToken);
+      setIsAdmin(parsedUser.role === 'admin');
+    }
   }, []);
 
-  function loginAsAdmin() {
-    localStorage.setItem('role', 'admin');
-    setRole('admin');
-  }
+  /**
+   * Called AFTER successful backend login
+   */
+  const loginAsAdmin = (jwtToken: string, user: User) => {
+    setUser(user);
+    setToken(jwtToken);
+    setIsAdmin(true);
 
-  function logout() {
-    localStorage.removeItem('role');
-    setRole(null);
-  }
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('token', jwtToken);
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    setIsAdmin(false);
+
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  };
 
   return (
-    <AuthContext.Provider value={{ role, loginAsAdmin, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAdmin,
+        loginAsAdmin,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

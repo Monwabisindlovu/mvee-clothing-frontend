@@ -1,160 +1,134 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { Truck, Shield, RefreshCw, Star } from 'lucide-react';
-
-import Header from '@/components/store/Header';
-import Footer from '@/components/store/Footer';
 
 import FeaturedCarousel from '@/components/store/FeaturedCarousel';
 import CategoryBanner from '@/components/store/CategoryBanner';
 import ProductCard from '@/components/store/ProductCard';
-import CartDrawer from '@/components/store/CartDrawer';
 import QuickViewModal from '@/components/store/QuickViewModal';
 import { Button } from '@/components/ui/button';
 import Hero from '@/components/store/HeroSection';
 
-import { productService } from '@/services/product.service';
+import { ProductService } from '@/services/product.service';
 import type { Product } from '@/types/product';
 
+import { useCartContext } from '@/context/CartContext';
+
 export default function HomePage() {
-  const [cart, setCart] = useState<any[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
-
-  /* ------------------ Cart persistence ------------------ */
-  useEffect(() => {
-    const saved = localStorage.getItem('mvee_cart');
-    if (saved) setCart(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('mvee_cart', JSON.stringify(cart));
-  }, [cart]);
+  const { addItem } = useCartContext();
 
   /* ------------------ Products ------------------ */
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: productService.getAll,
+    queryFn: ProductService.getAll,
   });
 
   const featuredProducts = products.filter(p => p.is_featured);
   const promotionProducts = products.filter(p => p.is_on_promotion);
 
-  /* ------------------ Cart actions ------------------ */
-  const addToCart = (product: Product) => {
-    setCart(prev => [
-      ...prev,
-      {
-        product_id: product.id,
-        product_name: product.name,
-        price: product.price,
-        quantity: 1,
-        size: product.sizes?.[0] ?? '',
-        color: product.colors?.[0]?.name ?? '',
-        image: product.images?.[0]?.url ?? '',
-      },
-    ]);
-    setIsCartOpen(true);
-  };
-
-  const updateQuantity = (index: number, quantity: number) => {
-    if (quantity < 1) return;
-    setCart(prev => prev.map((item, i) => (i === index ? { ...item, quantity } : item)));
-  };
-
-  const removeFromCart = (index: number) => {
-    setCart(prev => prev.filter((_, i) => i !== index));
-  };
-
   const avgRating = '5.0';
 
+  /* ------------------ Add to Cart Helper ------------------ */
+  const handleAddToCart = (
+    product: Product,
+    selectedSize?: string,
+    selectedColor?: string,
+    quantity: number = 1
+  ) => {
+    addItem({
+      ...product,
+      quantity,
+      selectedSize,
+      selectedColor,
+    });
+  };
+
+  const handleProductAdd = (product: Product) => {
+    // If multiple sizes/colors, open QuickView
+    if ((product.sizes?.length || 0) > 1 || (product.colors?.length || 0) > 1) {
+      setQuickViewProduct(product);
+      return;
+    }
+    // Otherwise add default
+    handleAddToCart(product, product.sizes?.[0], product.colors?.[0]?.name, 1);
+  };
+
   return (
-    <>
-      <Header cartCount={cart.length} onCartClick={() => setIsCartOpen(true)} />
+    <main>
+      <Hero />
 
-      <main>
-        <Hero />
+      {/* Feature strip */}
+      <section className="bg-black text-white py-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <Feature icon={<Truck />} label="FREE DELIVERY R500+" />
+          <Feature icon={<Shield />} label="PAY ON DELIVERY" />
+          <Feature icon={<RefreshCw />} label="EASY RETURNS" />
+          <Feature icon={<Star />} label={`${avgRating} RATING`} />
+        </div>
+      </section>
 
-        {/* Feature strip */}
-        <section className="bg-black text-white py-6">
-          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <Feature icon={<Truck />} label="FREE DELIVERY R500+" />
-            <Feature icon={<Shield />} label="PAY ON DELIVERY" />
-            <Feature icon={<RefreshCw />} label="EASY RETURNS" />
-            <Feature icon={<Star />} label={`${avgRating} RATING`} />
+      {/* Featured */}
+      {featuredProducts.length > 0 && (
+        <FeaturedCarousel
+          title="New Arrivals"
+          subtitle="JUST DROPPED"
+          products={featuredProducts}
+          onQuickView={setQuickViewProduct}
+          onAddToCart={handleProductAdd}
+        />
+      )}
+
+      <CategoryBanner onQuickView={setQuickViewProduct} onAddToCart={handleProductAdd} />
+
+      {/* Promotions */}
+      {promotionProducts.length > 0 && (
+        <FeaturedCarousel
+          title="On Sale"
+          subtitle="LIMITED TIME OFFERS"
+          products={promotionProducts}
+          onQuickView={setQuickViewProduct}
+          onAddToCart={handleProductAdd}
+        />
+      )}
+
+      {/* Popular products */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">Popular Items</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {products.slice(0, 8).map((product, index) => (
+              <ProductCard
+                key={product.id ?? index}
+                product={product}
+                onQuickView={setQuickViewProduct}
+                onAddToCart={handleProductAdd}
+              />
+            ))}
           </div>
-        </section>
 
-        {/* Featured */}
-        {featuredProducts.length > 0 && (
-          <FeaturedCarousel
-            title="New Arrivals"
-            subtitle="JUST DROPPED"
-            products={featuredProducts}
-            onQuickView={setQuickViewProduct}
-            onAddToCart={addToCart}
-          />
-        )}
-
-        <CategoryBanner />
-
-        {/* Promotions */}
-        {promotionProducts.length > 0 && (
-          <FeaturedCarousel
-            title="On Sale"
-            subtitle="LIMITED TIME OFFERS"
-            products={promotionProducts}
-            onQuickView={setQuickViewProduct}
-            onAddToCart={addToCart}
-          />
-        )}
-
-        {/* Popular products */}
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">Popular Items</h2>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {products.slice(0, 8).map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onQuickView={setQuickViewProduct}
-                  onAddToCart={() => addToCart(product)}
-                />
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Link href="/shop">
-                <Button className="px-12 py-4 tracking-widest">VIEW ALL PRODUCTS</Button>
-              </Link>
-            </div>
+          <div className="text-center mt-12">
+            <Link href="/shop">
+              <Button className="px-12 py-4 tracking-widest">VIEW ALL PRODUCTS</Button>
+            </Link>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <Footer />
-
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cart={cart}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeFromCart}
-      />
-
+      {/* QuickView Modal */}
       <QuickViewModal
         product={quickViewProduct}
         isOpen={!!quickViewProduct}
         onClose={() => setQuickViewProduct(null)}
-        onAddToCart={addToCart}
+        onAddToCart={p => {
+          handleAddToCart(p, p.selectedSize, p.selectedColor, p.quantity);
+          setQuickViewProduct(null);
+        }}
       />
-    </>
+    </main>
   );
 }
 

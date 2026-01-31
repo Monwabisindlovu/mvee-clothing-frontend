@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import {
@@ -11,54 +10,49 @@ import {
   DollarSign,
   Star,
   Plus,
-  ArrowRight,
   LayoutDashboard,
   Store,
 } from 'lucide-react';
 
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ProductService } from '@/services/product.service';
+import { OrderService } from '@/services/order.service';
+import { ReviewService } from '@/services/review.service';
+import type { Product } from '@/types/product';
+import type { Order } from '@/types/order';
+import type { Review } from '@/types/review';
 
 /* -------------------------------------------------------------------------- */
 /*                                Color Map                                   */
 /* -------------------------------------------------------------------------- */
-
 const statColors = {
-  blue: {
-    bg: 'bg-blue-100',
-    text: 'text-blue-600',
-  },
-  green: {
-    bg: 'bg-green-100',
-    text: 'text-green-600',
-  },
-  purple: {
-    bg: 'bg-purple-100',
-    text: 'text-purple-600',
-  },
-  yellow: {
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-600',
-  },
+  blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
+  green: { bg: 'bg-green-100', text: 'text-green-600' },
+  purple: { bg: 'bg-purple-100', text: 'text-purple-600' },
+  yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
 };
 
 export default function AdminDashboardPage() {
-  const { data: products = [] } = useQuery({
+  // Fetch products
+  const { data: products = [] } = useQuery<Product[]>({
     queryKey: ['admin-products'],
-    queryFn: () => base44.entities.Product.list('-created_date', 100),
+    queryFn: () => ProductService.getAll(),
   });
 
-  const { data: orders = [] } = useQuery({
+  // Fetch orders
+  const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 50),
+    queryFn: () => OrderService.getAll(),
   });
 
-  const { data: reviews = [] } = useQuery({
+  // Fetch reviews
+  const { data: reviews = [] } = useQuery<Review[]>({
     queryKey: ['admin-reviews'],
-    queryFn: () => base44.entities.Review.list('-created_date', 20),
+    queryFn: () => ReviewService.getAll(),
   });
 
+  // Stats
   const stats = {
     totalProducts: products.length,
     inStockProducts: products.filter(p => p.in_stock).length,
@@ -79,28 +73,24 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <LayoutDashboard className="w-6 h-6" />
-              <h1 className="text-xl font-bold">Admin Dashboard</h1>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <LayoutDashboard className="w-6 h-6" />
+            <h1 className="text-xl font-bold">Admin Dashboard</h1>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <Link href="/">
-                <Button variant="outline" size="sm">
-                  <Store className="w-4 h-4 mr-2" />
-                  View Store
-                </Button>
-              </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/">
+              <Button variant="outline" size="sm">
+                <Store className="w-4 h-4 mr-2" /> View Store
+              </Button>
+            </Link>
 
-              <Link href="/admin/products/create">
-                <Button size="sm" className="bg-black hover:bg-neutral-800">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Product
-                </Button>
-              </Link>
-            </div>
+            <Link href="/admin/products/create">
+              <Button size="sm" className="bg-black hover:bg-neutral-800">
+                <Plus className="w-4 h-4 mr-2" /> Add Product
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -109,12 +99,7 @@ export default function AdminDashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            {
-              label: 'Total Products',
-              value: stats.totalProducts,
-              icon: Package,
-              color: 'blue',
-            },
+            { label: 'Total Products', value: stats.totalProducts, icon: Package, color: 'blue' },
             {
               label: 'Total Orders',
               value: stats.totalOrders,
@@ -128,12 +113,7 @@ export default function AdminDashboardPage() {
               icon: DollarSign,
               color: 'purple',
             },
-            {
-              label: 'Avg Rating',
-              value: stats.avgRating,
-              icon: Star,
-              color: 'yellow',
-            },
+            { label: 'Avg Rating', value: stats.avgRating, icon: Star, color: 'yellow' },
           ].map((item, i) => {
             const Icon = item.icon;
             const colors = statColors[item.color as keyof typeof statColors];
@@ -146,17 +126,14 @@ export default function AdminDashboardPage() {
                 transition={{ delay: i * 0.1 }}
               >
                 <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-neutral-500 mb-1">{item.label}</p>
-                        <p className="text-3xl font-bold">{item.value}</p>
-                        {item.sub && <p className="text-xs text-orange-600 mt-1">{item.sub}</p>}
-                      </div>
-
-                      <div className={`p-3 rounded-xl ${colors.bg}`}>
-                        <Icon className={`w-6 h-6 ${colors.text}`} />
-                      </div>
+                  <CardContent className="p-6 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-neutral-500 mb-1">{item.label}</p>
+                      <p className="text-3xl font-bold">{item.value}</p>
+                      {item.sub && <p className="text-xs text-orange-600 mt-1">{item.sub}</p>}
+                    </div>
+                    <div className={`p-3 rounded-xl ${colors.bg}`}>
+                      <Icon className={`w-6 h-6 ${colors.text}`} />
                     </div>
                   </CardContent>
                 </Card>
@@ -183,7 +160,7 @@ export default function AdminDashboardPage() {
                 <p className="text-neutral-500 text-center py-8">No orders yet</p>
               ) : (
                 <div className="space-y-4">
-                  {recentOrders.map(order => (
+                  {recentOrders.map((order: Order) => (
                     <div
                       key={order.id}
                       className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
@@ -195,7 +172,6 @@ export default function AdminDashboardPage() {
                           {format(new Date(order.created_date), 'MMM d, HH:mm')}
                         </p>
                       </div>
-
                       <div className="text-right">
                         <p className="font-semibold text-sm">R{order.total?.toFixed(2)}</p>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 capitalize">
@@ -233,7 +209,7 @@ export default function AdminDashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {recentProducts.map(product => (
+                  {recentProducts.map((product: Product) => (
                     <Link
                       key={product.id}
                       href={`/admin/products/${product.id}`}
@@ -242,8 +218,9 @@ export default function AdminDashboardPage() {
                       <div className="w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden">
                         <img
                           src={
-                            product.images?.[0] ??
-                            'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100'
+                            typeof product.images?.[0] === 'string'
+                              ? product.images[0]
+                              : (product.images?.[0]?.url ?? '')
                           }
                           alt={product.name}
                           className="w-full h-full object-cover"

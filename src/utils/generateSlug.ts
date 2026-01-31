@@ -1,4 +1,12 @@
 // src/utils/generateSlug.ts
+export default function generateSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '');
+}
+
 export function createPageUrl(page: string): string {
   switch (page) {
     case 'ProductDetail':

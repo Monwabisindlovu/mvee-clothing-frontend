@@ -1,7 +1,10 @@
+import { Key, ReactNode } from 'react';
+
 export interface ProductImage {
   id: string;
   url: string;
   alt?: string;
+  is_main?: boolean;
 }
 
 export interface ProductColor {
@@ -10,22 +13,26 @@ export interface ProductColor {
 }
 
 export interface Product {
+  short_description: string;
+  subcategory: ReactNode;
+  _id: Key | null | undefined;
   id: string;
+
   name: string;
   slug: string;
-  description: string;
+  description?: string;
+
+  category: string;
+  type: string;
 
   price: number;
-  original_price?: number | null; // allow null to match form usage
+  original_price?: number | null;
 
-  images: ProductImage[]; // structured images
+  images: ProductImage[];
   sizes: string[];
   colors: ProductColor[];
 
-  category: string;
-  subcategory?: string; // optional, since your form references it
-
-  stock: number;
+  stock?: number;
   in_stock: boolean;
 
   is_featured: boolean;

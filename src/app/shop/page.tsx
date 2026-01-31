@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 
-import Header from '@/components/store/Header';
-import Footer from '@/components/store/Footer';
 import ProductCard from '@/components/store/ProductCard';
-import CartDrawer from '@/components/store/CartDrawer';
 import QuickViewModal from '@/components/store/QuickViewModal';
+import { useCartContext } from '@/context/CartContext';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -23,73 +21,81 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
-import { SlidersHorizontal, Search, X, Grid3X3, LayoutGrid } from 'lucide-react';
+import { SlidersHorizontal, Search, Grid3X3, LayoutGrid } from 'lucide-react';
+
+import { fetchProducts } from '@/services/product.service';
+import type { Product } from '@/types/product';
 
 export default function Shop() {
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category') || 'all';
+  const categoryFromUrl = searchParams.get('category') || 'all';
 
-  const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('mvee_cart');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
+  const { addItem } = useCartContext();
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  const [filters, setFilters] = useState({
-    category: initialCategory,
+  const [filters, setFilters] = useState<Filters>({
+    category: categoryFromUrl,
     subcategory: 'all',
     search: '',
     priceRange: [0, 5000],
     inStock: false,
     sortBy: 'newest',
   });
-  const [gridCols, setGridCols] = useState(4);
 
   useEffect(() => {
-    localStorage.setItem('mvee_cart', JSON.stringify(cart));
-  }, [cart]);
+    setFilters(f => ({
+      ...f,
+      category: categoryFromUrl,
+      subcategory: 'all',
+    }));
+  }, [categoryFromUrl]);
 
-  const { data: products = [], isLoading } = useQuery({
+  const [gridCols, setGridCols] = useState(4);
+
+  // Fetch products
+  const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('-created_date', 100),
+    queryFn: fetchProducts,
   });
 
   const subcategories = [
-    'shoes',
-    'sneakers',
-    't-shirts',
-    'jeans',
-    'dresses',
-    'jackets',
-    'hoodies',
-    'shorts',
+    'men-suits',
+    'men-blazers',
+    'men-formal-shirts',
+    'men-trousers',
+    'men-waistcoats',
+    'men-formal-shoes',
+    'men-ties',
+    'women-suits',
+    'women-blazers',
+    'women-dresses',
+    'women-formal-shirts',
+    'women-blouses',
+    'women-skirts',
+    'women-trousers',
+    'women-heels',
+    'women-handbags',
+    'women-formal-shoes',
     'accessories',
   ];
 
+  // Filter and sort products
   const filteredProducts = useMemo(() => {
     let result = [...products];
-
-    if (filters.category !== 'all') {
-      result = result.filter(p => p.category === filters.category);
-    }
-    if (filters.subcategory !== 'all') {
+    if (filters.category !== 'all') result = result.filter(p => p.category === filters.category);
+    if (filters.subcategory !== 'all')
       result = result.filter(p => p.subcategory === filters.subcategory);
-    }
     if (filters.search) {
-      const search = filters.search.toLowerCase();
+      const q = filters.search.toLowerCase();
       result = result.filter(
-        p => p.name?.toLowerCase().includes(search) || p.description?.toLowerCase().includes(search)
+        p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
       );
     }
     result = result.filter(
       p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]
     );
-    if (filters.inStock) {
-      result = result.filter(p => p.in_stock);
-    }
+    if (filters.inStock) result = result.filter(p => p.in_stock);
 
-    // Sorting
     switch (filters.sortBy) {
       case 'price-low':
         result.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -100,38 +106,9 @@ export default function Shop() {
       case 'name':
         result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         break;
-      default:
-        // newest - already sorted by created_date
-        break;
     }
-
     return result;
   }, [products, filters]);
-
-  const addToCart = (item: any) => {
-    const cartItem = item.product_id
-      ? item
-      : {
-          product_id: item.id,
-          product_name: item.name,
-          price: item.price,
-          quantity: 1,
-          size: item.sizes?.[0] || '',
-          color: item.colors?.[0]?.name || '',
-          image: item.images?.[0],
-        };
-    setCart(prev => [...prev, cartItem]);
-    setIsCartOpen(true);
-  };
-
-  const updateQuantity = (index: number, quantity: number) => {
-    if (quantity < 1) return;
-    setCart(prev => prev.map((item, i) => (i === index ? { ...item, quantity } : item)));
-  };
-
-  const removeFromCart = (index: number) => {
-    setCart(prev => prev.filter((_, i) => i !== index));
-  };
 
   const clearFilters = () => {
     setFilters({
@@ -145,254 +122,201 @@ export default function Shop() {
   };
 
   const categoryTitle =
-    filters.category !== 'all'
-      ? filters.category.charAt(0).toUpperCase() + filters.category.slice(1)
-      : 'All Products';
+    filters.category === 'all'
+      ? 'All Products'
+      : filters.category.charAt(0).toUpperCase() + filters.category.slice(1);
+
+  /** ✅ UPDATED HANDLERS */
+  const handleAddToCart = (
+    product: Product,
+    selectedSize?: string,
+    selectedColor?: string,
+    quantity: number = 1
+  ) => {
+    const payload = { ...product, quantity, selectedSize, selectedColor };
+    console.log('🛒 handleAddToCart called with:', payload);
+    addItem(payload);
+  };
+
+  const handleProductAdd = (product: Product) => {
+    console.log('🛍️ handleProductAdd called with:', product);
+
+    if ((product.sizes?.length || 0) > 1 || (product.colors?.length || 0) > 1) {
+      console.log('👀 Opening QuickView for', product.name);
+      setQuickViewProduct(product);
+      return;
+    }
+
+    handleAddToCart(product, product.sizes?.[0], product.colors?.[0]?.name, 1);
+  };
 
   return (
-    <>
-      <Header cartCount={cart.length} onCartClick={() => setIsCartOpen(true)} />
+    <main className="min-h-screen bg-white">
+      <section className="bg-neutral-100 py-12 md:py-20">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{categoryTitle}</h1>
+          <p className="text-neutral-600">{filteredProducts.length} products</p>
+        </div>
+      </section>
 
-      <main className="min-h-screen bg-white">
-        {/* Hero */}
-        <section className="bg-neutral-100 py-12 md:py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">{categoryTitle}</h1>
-            <p className="text-neutral-600">{filteredProducts.length} products</p>
-          </div>
-        </section>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          {/* Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-              <Input
-                placeholder="Search products..."
-                value={filters.search}
-                onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-                className="pl-10"
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Sort */}
-              <Select
-                value={filters.sortBy}
-                onValueChange={v => setFilters(f => ({ ...f, sortBy: v }))}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Mobile Filter Button */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="md:hidden">
-                    <SlidersHorizontal className="w-4 h-4 mr-2" />
-                    Filters
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <FilterPanel
-                    filters={filters}
-                    setFilters={setFilters}
-                    subcategories={subcategories}
-                  />
-                </SheetContent>
-              </Sheet>
-
-              {/* Grid Toggle */}
-              <div className="hidden md:flex items-center border rounded-lg">
-                <button
-                  onClick={() => setGridCols(3)}
-                  className={`p-2 ${gridCols === 3 ? 'bg-neutral-100' : ''}`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setGridCols(4)}
-                  className={`p-2 ${gridCols === 4 ? 'bg-neutral-100' : ''}`}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <Input
+              placeholder="Search products..."
+              value={filters.search}
+              onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+              className="pl-10"
+            />
           </div>
 
-          <div className="flex gap-8">
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:block w-64 flex-shrink-0">
-              <div className="sticky top-32">
+          <div className="flex items-center gap-4">
+            <Select
+              value={filters.sortBy}
+              onValueChange={v => setFilters(f => ({ ...f, sortBy: v }))}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="price-low">Price: Low → High</SelectItem>
+                <SelectItem value="price-high">Price: High → Low</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="md:hidden">
+                  <SlidersHorizontal className="w-4 h-4 mr-2" /> Filters
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
                 <FilterPanel
                   filters={filters}
                   setFilters={setFilters}
                   subcategories={subcategories}
                 />
-                {(filters.category !== 'all' ||
-                  filters.subcategory !== 'all' ||
-                  filters.inStock ||
-                  filters.search) && (
-                  <Button variant="ghost" onClick={clearFilters} className="w-full mt-4 text-sm">
-                    <X className="w-4 h-4 mr-2" />
-                    Clear all filters
-                  </Button>
-                )}
-              </div>
-            </aside>
+              </SheetContent>
+            </Sheet>
 
-            {/* Products Grid */}
-            <div className="flex-1">
-              {isLoading ? (
-                <div className={`grid grid-cols-2 md:grid-cols-${gridCols} gap-4 md:gap-6`}>
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-[3/4] bg-neutral-200 rounded-lg mb-4" />
-                      <div className="h-4 bg-neutral-200 rounded w-1/3 mb-2" />
-                      <div className="h-4 bg-neutral-200 rounded w-2/3 mb-2" />
-                      <div className="h-4 bg-neutral-200 rounded w-1/4" />
-                    </div>
-                  ))}
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-neutral-500 mb-4">No products found</p>
-                  <Button variant="outline" onClick={clearFilters}>
-                    Clear filters
-                  </Button>
-                </div>
-              ) : (
-                <motion.div
-                  layout
-                  className={`grid grid-cols-2 md:grid-cols-${gridCols} gap-4 md:gap-6`}
-                >
-                  <AnimatePresence>
-                    {filteredProducts.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onQuickView={setQuickViewProduct}
-                        onAddToCart={() => addToCart(product)}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </motion.div>
-              )}
+            <div className="hidden md:flex items-center border rounded-lg">
+              <button
+                onClick={() => setGridCols(3)}
+                className={`p-2 ${gridCols === 3 ? 'bg-neutral-100' : ''}`}
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setGridCols(4)}
+                className={`p-2 ${gridCols === 4 ? 'bg-neutral-100' : ''}`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
-      </main>
 
-      <Footer />
-
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cart={cart}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeFromCart}
-      />
+        {isLoading ? (
+          <p className="text-center py-20 text-neutral-500">Loading products…</p>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-neutral-500 mb-4">No products found</p>
+            <Button variant="outline" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          </div>
+        ) : (
+          <motion.div layout className={`grid grid-cols-2 md:grid-cols-${gridCols} gap-4 md:gap-6`}>
+            <AnimatePresence>
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id ?? `${product.name}-${Math.random()}`}
+                  product={product}
+                  onQuickView={setQuickViewProduct}
+                  onAddToCart={handleProductAdd}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
 
       <QuickViewModal
         product={quickViewProduct}
         isOpen={!!quickViewProduct}
         onClose={() => setQuickViewProduct(null)}
-        onAddToCart={addToCart}
+        onAddToCart={p => handleAddToCart(p, p.selectedSize, p.selectedColor)}
       />
-    </>
+    </main>
   );
 }
 
-function FilterPanel({ filters, setFilters, subcategories }) {
+interface Filters {
+  category: string;
+  subcategory: string;
+  search: string;
+  priceRange: number[];
+  inStock: boolean;
+  sortBy: string;
+}
+
+interface FilterPanelProps {
+  filters: Filters;
+  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+  subcategories: string[];
+}
+
+function FilterPanel({ filters, setFilters, subcategories }: FilterPanelProps) {
   return (
     <div className="space-y-8">
-      {/* Category */}
       <div>
-        <h3 className="font-semibold text-sm mb-4 tracking-wide">CATEGORY</h3>
-        <div className="space-y-3">
-          {['all', 'men', 'women', 'kids'].map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFilters(f => ({ ...f, category: cat }))}
-              className={`block text-sm capitalize transition-colors ${
-                filters.category === cat
-                  ? 'font-medium text-black'
-                  : 'text-neutral-500 hover:text-black'
-              }`}
-            >
-              {cat === 'all' ? 'All Categories' : cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Subcategory */}
-      <div>
-        <h3 className="font-semibold text-sm mb-4 tracking-wide">TYPE</h3>
-        <div className="space-y-3">
+        <h3 className="font-semibold text-sm mb-4">CATEGORY</h3>
+        {['all', 'men', 'women'].map(cat => (
           <button
-            onClick={() => setFilters(f => ({ ...f, subcategory: 'all' }))}
-            className={`block text-sm transition-colors ${
-              filters.subcategory === 'all'
-                ? 'font-medium text-black'
-                : 'text-neutral-500 hover:text-black'
-            }`}
+            key={cat}
+            onClick={() => setFilters(f => ({ ...f, category: cat }))}
+            className={`block text-sm capitalize ${filters.category === cat ? 'font-medium text-black' : 'text-neutral-500'}`}
           >
-            All Types
+            {cat === 'all' ? 'All Products' : cat}
           </button>
-          {subcategories.map(sub => (
-            <button
-              key={sub}
-              onClick={() => setFilters(f => ({ ...f, subcategory: sub }))}
-              className={`block text-sm capitalize transition-colors ${
-                filters.subcategory === sub
-                  ? 'font-medium text-black'
-                  : 'text-neutral-500 hover:text-black'
-              }`}
-            >
-              {sub.replace('-', ' ')}
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
-      {/* Price Range */}
       <div>
-        <h3 className="font-semibold text-sm mb-4 tracking-wide">PRICE RANGE</h3>
+        <h3 className="font-semibold text-sm mb-4">TYPE</h3>
+        {subcategories.map(sub => (
+          <button
+            key={sub}
+            onClick={() => setFilters(f => ({ ...f, subcategory: sub }))}
+            className={`block text-sm capitalize ${filters.subcategory === sub ? 'font-medium text-black' : 'text-neutral-500'}`}
+          >
+            {sub.replace(/-/g, ' ')}
+          </button>
+        ))}
+      </div>
+
+      <div>
+        <h3 className="font-semibold text-sm mb-4">PRICE RANGE</h3>
         <Slider
           value={filters.priceRange}
           onValueChange={v => setFilters(f => ({ ...f, priceRange: v }))}
           max={5000}
           step={100}
-          className="mb-2"
         />
-        <div className="flex justify-between text-sm text-neutral-500">
-          <span>R{filters.priceRange[0]}</span>
-          <span>R{filters.priceRange[1]}</span>
-        </div>
       </div>
 
-      {/* In Stock */}
       <div className="flex items-center gap-2">
         <Checkbox
-          id="inStock"
           checked={filters.inStock}
-          onCheckedChange={c => setFilters(f => ({ ...f, inStock: c }))}
+          onChange={e => setFilters(f => ({ ...f, inStock: e.target.checked }))}
         />
-        <label htmlFor="inStock" className="text-sm">
-          In Stock Only
-        </label>
+        <span className="text-sm">In Stock Only</span>
       </div>
     </div>
   );

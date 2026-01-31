@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   cartCount?: number;
@@ -15,6 +16,8 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const { isAdmin, logout } = useAuth();
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -24,7 +27,6 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
   const categories = [
     { name: 'Men', href: '/shop?category=men' },
     { name: 'Women', href: '/shop?category=women' },
-    { name: 'Kids', href: '/shop?category=kids' },
   ];
 
   return (
@@ -34,16 +36,11 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
           isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-white'
         }`}
       >
-        {/* Top Banner */}
-        <div className="bg-black text-white text-center py-2 text-xs tracking-widest">
-          FREE DELIVERY ON ORDERS OVER R500 | PAY ON DELIVERY
-        </div>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setIsMenuOpen(prev => !prev)}
               className="md:hidden p-2 -ml-2"
               aria-label="Toggle menu"
             >
@@ -58,12 +55,19 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
                 width={120}
                 height={40}
                 priority
-                className="object-contain"
+                style={{ objectFit: 'contain' }}
               />
             </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
+              <Link
+                href="/"
+                className="text-sm font-medium tracking-wide hover:text-neutral-500 transition-colors relative group"
+              >
+                Home
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full" />
+              </Link>
               {categories.map(cat => (
                 <Link
                   key={cat.name}
@@ -85,18 +89,28 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2 md:gap-4">
-              {/* Admin Dashboard */}
-              <Link
-                href="/admin/dashboard"
-                className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
-                aria-label="Admin dashboard"
-              >
-                <User className="w-5 h-5" />
-              </Link>
+              {/* Admin Icon */}
+              {isAdmin ? (
+                <button
+                  onClick={logout}
+                  className="p-2 rounded hover:bg-neutral-100 transition-colors"
+                  title="Logout Admin"
+                >
+                  <Shield className="w-5 h-5 text-green-600" />
+                </button>
+              ) : (
+                <Link
+                  href="/admin/login"
+                  className="p-2 rounded hover:bg-neutral-100 transition-colors"
+                  title="Admin Login"
+                >
+                  <Shield className="w-5 h-5" />
+                </Link>
+              )}
 
               {/* Cart */}
               <button
-                onClick={onCartClick}
+                onClick={() => onCartClick?.()}
                 className="p-2 hover:bg-neutral-100 rounded-full transition-colors relative"
                 aria-label="Cart"
               >
@@ -122,6 +136,13 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
             className="fixed inset-0 z-40 bg-white pt-32 px-6 md:hidden"
           >
             <nav className="flex flex-col gap-6">
+              <Link
+                href="/"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-3xl font-bold tracking-tight hover:text-neutral-500 transition-colors"
+              >
+                Home
+              </Link>
               {categories.map(cat => (
                 <Link
                   key={cat.name}
@@ -139,13 +160,22 @@ export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
               >
                 All Products
               </Link>
+
+              {/* Mobile Admin */}
+              <Link
+                href={isAdmin ? '/admin/dashboard' : '/admin/login'}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-2xl font-semibold mt-6"
+              >
+                {isAdmin ? 'Admin Dashboard' : 'Admin Login'}
+              </Link>
             </nav>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Spacer to offset fixed header */}
-      <div className="h-24 md:h-28" />
+      {/* Spacer to prevent content behind header */}
+      <div className="h-16 md:h-20" />
     </>
   );
 }
