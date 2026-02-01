@@ -3,7 +3,7 @@
 import { CartItem as Item } from '@/types/cart';
 import useCart from '@/hooks/useCart';
 
-export default function CartItem({ item, index }: { item: Item; index: number }) {
+export default function CartItem({ item }: { item: Item }) {
   const { updateQuantity, removeItem } = useCart();
 
   return (
@@ -21,10 +21,12 @@ export default function CartItem({ item, index }: { item: Item; index: number })
           type="number"
           min={1}
           value={item.quantity}
-          onChange={e => updateQuantity(index, Number(e.target.value))}
+          onChange={e => updateQuantity(item.id, Number(e.target.value))} // ✅ use item.id
           className="w-16 border px-2"
         />
-        <button onClick={() => removeItem(index)} className="text-red-500">
+        <button onClick={() => removeItem(item.id)} className="text-red-500">
+          {' '}
+          {/* ✅ use item.id */}
           Remove
         </button>
       </div>

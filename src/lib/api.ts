@@ -8,7 +8,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     const res = await fetch(`${API_BASE_URL}${path}`, {
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}), // ✅ inject automatically
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
       },
       ...options,
@@ -19,12 +19,13 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       try {
         const errorData = await res.json();
         if (errorData?.message) errorMessage = errorData.message;
-      } catch (_) {
-        // Ignore JSON parsing errors
+      } catch {
+        // Ignore JSON parse errors
       }
       throw new Error(errorMessage);
     }
 
+    // Handle 204 No Content
     if (res.status === 204) return null as unknown as T;
 
     return res.json();

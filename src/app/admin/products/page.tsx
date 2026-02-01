@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Package, Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -80,7 +81,6 @@ export default function AdminProductsPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-
             <div className="flex items-center gap-2">
               <Package className="w-5 h-5" />
               <h1 className="text-xl font-bold">Products</h1>
@@ -147,7 +147,6 @@ export default function AdminProductsPage() {
                   <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
-
               <tbody>
                 {filteredProducts.map(product => {
                   const categoryLabel =
@@ -165,22 +164,23 @@ export default function AdminProductsPage() {
 
                   return (
                     <tr
-                      key={product._id}
+                      key={product._id ?? product.id}
                       className="border-t hover:bg-neutral-50 transition-colors"
                     >
                       {/* Product */}
                       <td className="p-3">
                         <div className="flex items-start gap-3">
-                          <div className="h-12 w-12 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
+                          <div className="w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden relative shrink-0">
                             {product.images?.[0]?.url && (
-                              <img
-                                src={product.images[0].url}
+                              <Image
+                                src={product.images[0].url ?? '/placeholder.png'}
                                 alt={product.name}
-                                className="h-full w-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="48px"
                               />
                             )}
                           </div>
-
                           <div>
                             <p className="font-medium text-sm">{product.name}</p>
                             <p className="text-xs text-neutral-500 line-clamp-2">
@@ -211,7 +211,7 @@ export default function AdminProductsPage() {
                           checked={product.in_stock}
                           onCheckedChange={() =>
                             updateMutation.mutate({
-                              id: product._id,
+                              id: product._id ?? product.id,
                               data: { in_stock: !product.in_stock },
                             })
                           }
@@ -224,7 +224,7 @@ export default function AdminProductsPage() {
                           checked={product.is_featured}
                           onCheckedChange={() =>
                             updateMutation.mutate({
-                              id: product._id,
+                              id: product._id ?? product.id,
                               data: { is_featured: !product.is_featured },
                             })
                           }
@@ -237,7 +237,7 @@ export default function AdminProductsPage() {
                           checked={product.is_on_promotion}
                           onCheckedChange={() =>
                             updateMutation.mutate({
-                              id: product._id,
+                              id: product._id ?? product.id,
                               data: { is_on_promotion: !product.is_on_promotion },
                             })
                           }
@@ -247,28 +247,23 @@ export default function AdminProductsPage() {
                       {/* Actions */}
                       <td className="p-3 text-right">
                         <div className="flex justify-end gap-1">
-                          {/* Public view */}
                           <Link href={`/shop/${product.slug}`}>
                             <Button variant="ghost" size="icon">
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>
-
-                          {/* Edit */}
-                          <Link href={`/admin/products/${product._id}`}>
+                          <Link href={`/admin/products/${product._id ?? product.id}`}>
                             <Button variant="ghost" size="icon">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
-
-                          {/* Delete */}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="text-red-500 hover:text-red-600"
                             onClick={() => {
                               if (confirm(`Delete ${product.name}?`)) {
-                                deleteMutation.mutate(product._id);
+                                deleteMutation.mutate(product._id ?? product.id);
                               }
                             }}
                           >

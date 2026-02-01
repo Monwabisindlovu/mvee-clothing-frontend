@@ -1,5 +1,5 @@
 // src/types/order.ts
-import type { Product } from './product';
+import { ReactNode } from 'react';
 
 export interface OrderItem {
   product_id: string;

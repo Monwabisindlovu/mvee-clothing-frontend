@@ -5,16 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { role } = useAuth();
+  const { isAdmin } = useAuth(); // ✅ use isAdmin from context
   const router = useRouter();
 
   useEffect(() => {
-    if (role !== 'admin') {
+    if (!isAdmin) {
       router.push('/');
     }
-  }, [role, router]);
+  }, [isAdmin, router]);
 
-  if (role !== 'admin') return null;
+  if (!isAdmin) return null;
 
   return <>{children}</>;
 }

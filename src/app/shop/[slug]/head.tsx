@@ -1,6 +1,4 @@
 // app/shop/[slug]/head.tsx
-'use client';
-
 import type { Product } from '@/types/product';
 import { apiFetch } from '@/lib/api';
 

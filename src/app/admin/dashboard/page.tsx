@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import {
@@ -215,15 +216,17 @@ export default function AdminDashboardPage() {
                       href={`/admin/products/${product.id}`}
                       className="flex items-center gap-3 p-2 hover:bg-neutral-50 rounded-lg transition-colors"
                     >
-                      <div className="w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden">
-                        <img
+                      <div className="w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden relative">
+                        <Image
                           src={
                             typeof product.images?.[0] === 'string'
                               ? product.images[0]
-                              : (product.images?.[0]?.url ?? '')
+                              : (product.images?.[0]?.url ?? '/placeholder.png')
                           }
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="48px"
                         />
                       </div>
 

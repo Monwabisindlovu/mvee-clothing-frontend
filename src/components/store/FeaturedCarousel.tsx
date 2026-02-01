@@ -3,14 +3,15 @@
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
+import type { Product } from '@/types/product';
 
 interface FeaturedCarouselProps {
-  products: any[];
+  products: Product[];
   title: string;
   subtitle?: string;
-  onQuickView?: (product: any) => void;
+  onQuickView?: (product: Product) => void;
   onAddToCart?: (
-    product: any & { quantity: number; selectedSize?: string; selectedColor?: string }
+    product: Product & { quantity: number; selectedSize?: string; selectedColor?: string }
   ) => void;
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ShoppingBag, Trash2, MessageCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -82,22 +83,17 @@ export default function CheckoutPage() {
     window.open(whatsappUrl, '_blank');
     clearCart();
 
-    // Reset submitting after redirect
     setTimeout(() => {
       router.push('/');
       setSubmitting(false);
     }, 500);
   };
 
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
-  if (isLoading) {
-    return <p className="text-center py-20">Loading your cart…</p>;
-  }
+  if (isLoading) return <p className="text-center py-20">Loading your cart…</p>;
 
-  if (!items.length) {
+  if (!items.length)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-white rounded-2xl p-12 text-center">
@@ -107,7 +103,6 @@ export default function CheckoutPage() {
         </div>
       </div>
     );
-  }
 
   return (
     <main className="min-h-screen bg-neutral-50 py-12">
@@ -197,11 +192,13 @@ export default function CheckoutPage() {
               {items.map(item => (
                 <div key={item.id} className="flex gap-4 items-center">
                   {item.image && (
-                    <div className="w-20 h-24 bg-neutral-100 rounded-lg overflow-hidden">
-                      <img
-                        src={item.image}
+                    <div className="w-20 h-24 bg-neutral-100 rounded-lg overflow-hidden relative">
+                      <Image
+                        src={item.image ?? '/placeholder.png'}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="80px"
                       />
                     </div>
                   )}

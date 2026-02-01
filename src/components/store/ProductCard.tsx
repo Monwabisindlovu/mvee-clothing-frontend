@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Eye, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import type { Product } from '@/types/product';
 
 interface ProductCardProps {
@@ -30,13 +31,11 @@ export default function ProductCard({ product, onQuickView, onAddToCart }: Produ
 
   /* ------------------ Add to Cart / QuickView ------------------ */
   const handleAction = () => {
-    // If product has multiple sizes or colors → QuickView
     if ((product.sizes?.length || 0) > 1 || (product.colors?.length || 0) > 1) {
       onQuickView?.(product);
       return;
     }
 
-    // Single variant → add directly to cart
     onAddToCart?.({
       ...product,
       quantity: 1,
@@ -58,16 +57,19 @@ export default function ProductCard({ product, onQuickView, onAddToCart }: Produ
     >
       <div className="relative aspect-[3/4] bg-neutral-100 rounded-lg overflow-hidden mb-4">
         {/* Product Image */}
-        <img
-          src={
-            images[currentImageIndex]?.url ||
-            images[0]?.url ||
-            'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400'
-          }
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
-          onClick={handleAction}
-        />
+        <div className="relative w-full h-full cursor-pointer" onClick={handleAction}>
+          <Image
+            src={
+              images[currentImageIndex]?.url ||
+              images[0]?.url ||
+              'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400'
+            }
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 25vw"
+          />
+        </div>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">

@@ -48,12 +48,10 @@ export default function HomePage() {
   };
 
   const handleProductAdd = (product: Product) => {
-    // If multiple sizes/colors, open QuickView
     if ((product.sizes?.length || 0) > 1 || (product.colors?.length || 0) > 1) {
       setQuickViewProduct(product);
       return;
     }
-    // Otherwise add default
     handleAddToCart(product, product.sizes?.[0], product.colors?.[0]?.name, 1);
   };
 
@@ -82,7 +80,8 @@ export default function HomePage() {
         />
       )}
 
-      <CategoryBanner onQuickView={setQuickViewProduct} onAddToCart={handleProductAdd} />
+      {/* ✅ CategoryBanner is purely navigational */}
+      <CategoryBanner />
 
       {/* Promotions */}
       {promotionProducts.length > 0 && (

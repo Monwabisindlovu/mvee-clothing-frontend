@@ -19,6 +19,7 @@ interface CartContextValue {
   clearCart: () => void;
   total: number;
   hydrating: boolean;
+  isLoading: boolean; // ✅ added loading state
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -26,10 +27,12 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrating, setHydrating] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // ✅ added
 
   /* ---------------------- Hydrate from localStorage ---------------------- */
   useEffect(() => {
     try {
+      setIsLoading(true); // start loading
       const saved = localStorage.getItem('mvee_cart');
       if (saved) {
         setItems(JSON.parse(saved));
@@ -38,13 +41,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to load cart:', err);
     } finally {
       setHydrating(false);
+      setIsLoading(false); // ✅ done loading
     }
   }, []);
 
   /* ---------------------- Persist to localStorage ------------------------ */
   useEffect(() => {
     if (!hydrating) {
+      setIsLoading(true); // start loading
       localStorage.setItem('mvee_cart', JSON.stringify(items));
+      setIsLoading(false); // ✅ done loading
     }
   }, [items, hydrating]);
 
@@ -80,19 +86,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         ...prev,
         {
           id: crypto.randomUUID(),
-          productId: product.id, // ✅ flat id for duplicate checks
+          productId: product.id,
           name: product.name,
           price: product.price,
           quantity: product.quantity,
           size: product.selectedSize,
           color: product.selectedColor,
           image: product.images?.[0]?.url,
-          product, // ✅ keep full product object
+          product,
         },
       ];
     });
 
-    // 🔔 Toast AFTER state update
     if (updatedExisting) {
       toast.success(
         `Updated ${product.name} (${product.selectedSize || 'No size'} • ${
@@ -129,7 +134,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   /* ------------------------ Update Quantity ------------------------------ */
   const updateQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return;
-
     setItems(prev => prev.map(item => (item.id === id ? { ...item, quantity } : item)));
   };
 
@@ -155,6 +159,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         total,
         hydrating,
+        isLoading, // ✅ provided
       }}
     >
       {children}

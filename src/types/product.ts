@@ -1,5 +1,3 @@
-import { Key, ReactNode } from 'react';
-
 export interface ProductImage {
   id: string;
   url: string;
@@ -14,8 +12,8 @@ export interface ProductColor {
 
 export interface Product {
   short_description: string;
-  subcategory: ReactNode;
-  _id: Key | null | undefined;
+  subcategory: string; // ReactNode was too loose; use string for DB values
+  _id: string; // ✅ Fix: always a string
   id: string;
 
   name: string;

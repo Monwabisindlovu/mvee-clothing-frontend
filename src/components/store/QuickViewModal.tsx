@@ -6,6 +6,7 @@ import { X, ChevronLeft, ChevronRight, Plus, Minus, ShoppingBag } from 'lucide-r
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import type { Product } from '@/types/product';
 
 interface QuickViewModalProps {
@@ -105,14 +106,18 @@ export default function QuickViewModal({
 
           {/* Images */}
           <div className="relative w-full md:w-1/2 bg-neutral-100">
-            <img
-              src={
-                images[currentImageIndex]?.url ||
-                'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600'
-              }
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+            <div className="relative w-full h-full">
+              <Image
+                src={
+                  images[currentImageIndex]?.url ||
+                  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600'
+                }
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </div>
 
             {images.length > 1 && (
               <>
@@ -215,7 +220,6 @@ export default function QuickViewModal({
                 ADD TO CART
               </Button>
 
-              {/* 🚀 Updated View Full Details */}
               <Button
                 variant="outline"
                 className="w-full"

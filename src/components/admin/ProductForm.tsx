@@ -181,7 +181,11 @@ export default function ProductForm({ productId }: ProductFormProps) {
       is_on_promotion: form.is_on_promotion,
     };
 
-    isEditing ? updateMutation.mutate(payload) : createMutation.mutate(payload);
+    if (isEditing) {
+      updateMutation.mutate(payload);
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   if (isLoading) {

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useCartContext } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -19,10 +20,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const total = items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
 
   const handleCheckout = () => {
-    // Close the drawer for animation
     onClose();
-
-    // Navigate to checkout after drawer closes
     setTimeout(() => {
       router.push('/checkout');
     }, 200); // matches drawer animation
@@ -79,11 +77,13 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       <div key={item.id} className="flex gap-4">
                         {/* Image */}
                         {item.image && (
-                          <div className="w-20 h-24 bg-neutral-100 rounded-lg overflow-hidden">
-                            <img
+                          <div className="w-20 h-24 bg-neutral-100 rounded-lg overflow-hidden relative">
+                            <Image
                               src={item.image}
                               alt={item.name}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="80px"
                             />
                           </div>
                         )}

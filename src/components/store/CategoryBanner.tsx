@@ -2,29 +2,41 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import type { Product } from '@/types/product';
-import ProductCard from './ProductCard';
 
-interface CategoryBannerProps {
-  onQuickView?: (product: Product) => void;
-  onAddToCart?: (product: Product) => void;
+interface Category {
+  id: string;
+  name: string;
+  image: string;
+  link: string;
 }
 
-const categories = [
+interface Slide {
+  title: string;
+  description: string;
+  image: string;
+  link: string;
+}
+
+// Static categories
+const categories: Category[] = [
   {
+    id: '1',
     name: 'Men',
     image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800',
     link: '/shop?category=men',
   },
   {
+    id: '2',
     name: 'Women',
     image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=800',
     link: '/shop?category=women',
   },
 ];
 
-const shoeSlides = [
+// Static shoe slides
+const shoeSlides: Slide[] = [
   {
     title: 'Men’s Formal Shoes',
     description: 'Sharp silhouettes crafted for confidence, power, and timeless style.',
@@ -39,9 +51,9 @@ const shoeSlides = [
   },
 ];
 
-export default function CategoryBanner({ onQuickView, onAddToCart }: CategoryBannerProps) {
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+export default function CategoryBanner() {
+  const [activeSlide, setActiveSlide] = useState<number>(0);
+  const [direction, setDirection] = useState<number>(1); // 1 = forward, -1 = backward
 
   // Auto-slide every 5 seconds
   useEffect(() => {
@@ -58,7 +70,7 @@ export default function CategoryBanner({ onQuickView, onAddToCart }: CategoryBan
     exit: (dir: number) => ({ x: dir > 0 ? -300 : 300, opacity: 0 }),
   };
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.x > 50) {
       setDirection(-1);
       setActiveSlide(prev => (prev - 1 + shoeSlides.length) % shoeSlides.length);
@@ -77,10 +89,10 @@ export default function CategoryBanner({ onQuickView, onAddToCart }: CategoryBan
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Men & Women category cards */}
+          {/* Category cards */}
           {categories.map((category, idx) => (
             <motion.div
-              key={category.name}
+              key={category.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -90,10 +102,12 @@ export default function CategoryBanner({ onQuickView, onAddToCart }: CategoryBan
                 href={category.link}
                 className="group block relative rounded-2xl overflow-hidden aspect-[3/4]"
               >
-                <img
+                <Image
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute bottom-6 left-6 right-6 pointer-events-none">
@@ -108,7 +122,7 @@ export default function CategoryBanner({ onQuickView, onAddToCart }: CategoryBan
             </motion.div>
           ))}
 
-          {/* Shoe Slide card */}
+          {/* Shoe slides */}
           <motion.div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
             <AnimatePresence custom={direction} mode="wait" initial={false}>
               <motion.div
@@ -125,10 +139,12 @@ export default function CategoryBanner({ onQuickView, onAddToCart }: CategoryBan
                 onDragEnd={handleDragEnd}
               >
                 <Link href={shoeSlides[activeSlide].link} className="block w-full h-full relative">
-                  <img
+                  <Image
                     src={shoeSlides[activeSlide].image}
                     alt={shoeSlides[activeSlide].title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
                   <div className="absolute bottom-6 left-6 right-6 pointer-events-none">

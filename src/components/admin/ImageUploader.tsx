@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { X, ImagePlus, GripVertical } from 'lucide-react';
+import Image from 'next/image';
 import type { ProductImage } from '@/types/product';
 
 interface ImageUploaderProps {
@@ -40,7 +41,7 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
   };
 
   /* ---------------------------- UPLOAD FILE ---------------------------- */
-  const uploadFile = async (file: File, onProgress?: (p: number) => void): Promise<string> => {
+  const uploadFile = async (file: File): Promise<string> => {
     const { timestamp, signature, apiKey, cloudName } = await getSignature();
 
     const formData = new FormData();
@@ -76,7 +77,7 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
         setProgress(p => ({ ...p, [id]: 0 }));
 
         try {
-          const realUrl = await uploadFile(file, p => setProgress(prev => ({ ...prev, [id]: p })));
+          const realUrl = await uploadFile(file);
           uploadedImages.push({ id, url: realUrl, alt: file.name });
         } catch (err) {
           console.error('Image upload failed', err);
@@ -183,7 +184,13 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
               onDrop={() => onDrop(index)}
               className="group relative aspect-square rounded-lg border overflow-hidden"
             >
-              <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
+              <Image
+                src={img.url}
+                alt={img.alt ?? ''}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 25vw"
+              />
 
               {index === 0 && (
                 <span className="absolute left-2 top-2 rounded bg-black/70 px-2 py-0.5 text-xs text-white">

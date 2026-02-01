@@ -2,8 +2,21 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { X } from 'lucide-react';
+import { useAuth, User } from '@/context/AuthContext';
+import { X, Eye, EyeOff } from 'lucide-react';
+
+interface UserResponse {
+  id: string;
+  role: 'admin' | 'user';
+  name: string;
+  email: string;
+}
+
+interface LoginResponse {
+  token?: string;
+  user?: UserResponse;
+  message?: string; // optional backend error message
+}
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,10 +26,19 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -26,19 +48,32 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data: LoginResponse = await res.json();
 
-      if (!res.ok || !data.token) {
+      if (!res.ok || !data.token || !data.user) {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store auth in context
-      loginAsAdmin(data.token, data.user);
+      // Ensure user object matches AuthContext's User type
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email,
+        role: data.user.role,
+        name: data.user.name || 'Admin', // fallback if name missing
+      };
 
-      // Redirect to admin dashboard
+      if (user.role !== 'admin') {
+        throw new Error('You are not authorized as an admin');
+      }
+
+      loginAsAdmin(data.token, user);
       router.push('/admin/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -70,14 +105,23 @@ export default function AdminLoginPage() {
             required
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full rounded border px-3 py-2"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              className="w-full rounded border px-3 py-2 pr-10"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => !prev)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
 
           <button
             type="submit"
