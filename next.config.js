@@ -1,21 +1,29 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // Use remotePatterns for flexible matching
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        pathname: '/**', // allow all Unsplash paths
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        pathname: '/**', // allow all Cloudinary images
+        pathname: '/**',
       },
     ],
   },
+  webpack(config) {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    };
+    return config;
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
