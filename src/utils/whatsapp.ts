@@ -20,10 +20,6 @@ interface OrderDetails {
   total: number;
 }
 
-/**
- * Builds a professional WhatsApp order message
- * (returns TEXT, not a URL)
- */
 export const createWhatsAppOrder = (items: CartItem[], details: OrderDetails): string => {
   const itemsText = items
     .map(
@@ -59,9 +55,6 @@ Please confirm this order.
 `.trim();
 };
 
-/**
- * Generates WhatsApp link
- */
 export const generateWhatsAppLink = (phone: string, message: string): string => {
   const normalizedPhone = phone.replace(/\D/g, '');
   const encodedMessage = encodeURIComponent(message);
