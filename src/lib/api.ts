@@ -1,17 +1,28 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+type ApiFetchOptions = Omit<RequestInit, 'body'> & {
+  body?: unknown;
+};
+
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   try {
-    // Grab token from localStorage (set by AuthContext on login)
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
+    const isFormData = options.body instanceof FormData;
+
+    const headers: HeadersInit = {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    };
+
     const res = await fetch(`${API_BASE_URL}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(options.headers || {}),
-      },
       ...options,
+      headers,
+      body:
+        options.body && !isFormData
+          ? JSON.stringify(options.body)
+          : (options.body as BodyInit | null),
     });
 
     if (!res.ok) {
@@ -19,14 +30,13 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       try {
         const errorData = await res.json();
         if (errorData?.message) errorMessage = errorData.message;
-      } catch {
-        // Ignore JSON parse errors
-      }
+      } catch {}
       throw new Error(errorMessage);
     }
 
-    // Handle 204 No Content
-    if (res.status === 204) return null as unknown as T;
+    if (res.status === 204) {
+      return null as T;
+    }
 
     return res.json();
   } catch (err) {

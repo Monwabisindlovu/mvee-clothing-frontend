@@ -24,7 +24,7 @@ import SizeSelector from '@/components/admin/SizeSelector';
 import ColorSelector, { ColorValue } from '@/components/admin/ColorSelector';
 import ImageUploader from '@/components/admin/ImageUploader';
 
-import { ProductService } from '@/services/product.service';
+import { apiFetch } from '@/lib/api';
 import generateSlug from '@/utils/generateSlug';
 
 import type { Product, ProductImage } from '@/types/product';
@@ -98,7 +98,7 @@ export default function ProductForm({ productId }: ProductFormProps) {
   const { data: product, isLoading } = useQuery<Product | null>({
     queryKey: ['product', productId],
     enabled: !!productId,
-    queryFn: () => ProductService.getById(productId!),
+    queryFn: () => apiFetch<Product>(`/api/products/${productId}`),
   });
 
   useEffect(() => {
@@ -130,8 +130,12 @@ export default function ProductForm({ productId }: ProductFormProps) {
   }, [product]);
 
   /* ---------------------------- Mutations ---------------------------- */
-  const createMutation = useMutation({
-    mutationFn: (data: Partial<Product>) => ProductService.create(data),
+  const createMutation = useMutation<Product, Error, Partial<Product>>({
+    mutationFn: data =>
+      apiFetch<Product>('/api/products', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success('Product created');
@@ -140,8 +144,12 @@ export default function ProductForm({ productId }: ProductFormProps) {
     onError: () => toast.error('Failed to create product'),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: Partial<Product>) => ProductService.update(productId!, data),
+  const updateMutation = useMutation<Product, Error, Partial<Product>>({
+    mutationFn: data =>
+      apiFetch<Product>(`/api/products/${productId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success('Product updated');

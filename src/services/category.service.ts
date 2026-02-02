@@ -4,20 +4,18 @@ import { apiFetch } from '@/lib/api';
 
 export const CategoryService = {
   /* ------------------------------ GET ALL CATEGORIES ------------------------------ */
-  getAll: () => apiFetch<Category[]>('/api/categories'),
+  getAll: (): Promise<Category[]> => apiFetch<Category[]>('/api/categories'),
 
   /* ------------------------------ CREATE CATEGORY ------------------------------ */
-  create: (data: Partial<Category>, token?: string) =>
+  create: (data: Partial<Category>): Promise<Category> =>
     apiFetch<Category>('/api/categories', {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       body: JSON.stringify(data),
     }),
 
   /* ------------------------------ DELETE CATEGORY ------------------------------ */
-  delete: (id: string, token?: string) =>
+  delete: (id: string): Promise<void> =>
     apiFetch<void>(`/api/categories/${id}`, {
       method: 'DELETE',
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     }),
 };

@@ -1,40 +1,26 @@
 // src/services/review.service.ts
 import type { Review } from '@/types/review';
+import { apiFetch } from '@/lib/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000/api';
+const REVIEWS_PATH = '/api/reviews';
 
-export class ReviewService {
-  // Fetch all reviews (with optional limit)
-  static async getAll(limit = 20): Promise<Review[]> {
-    const res = await fetch(`${API_BASE}/reviews?limit=${limit}`);
-    if (!res.ok) throw new Error('Failed to fetch reviews');
-    const data = await res.json();
-    return data as Review[];
-  }
+export const ReviewService = {
+  /* ------------------------------ GET ALL REVIEWS ------------------------------ */
+  getAll: (limit = 20): Promise<Review[]> => apiFetch<Review[]>(`${REVIEWS_PATH}?limit=${limit}`),
 
-  // Fetch single review by ID
-  static async getById(id: string): Promise<Review> {
-    const res = await fetch(`${API_BASE}/reviews/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch review');
-    const data = await res.json();
-    return data as Review;
-  }
+  /* ------------------------------ GET REVIEW BY ID ------------------------------ */
+  getById: (id: string): Promise<Review> => apiFetch<Review>(`${REVIEWS_PATH}/${id}`),
 
-  // Update review
-  static async update(id: string, payload: Partial<Review>): Promise<Review> {
-    const res = await fetch(`${API_BASE}/reviews/${id}`, {
+  /* ------------------------------ UPDATE REVIEW ------------------------------ */
+  update: (id: string, payload: Partial<Review>): Promise<Review> =>
+    apiFetch<Review>(`${REVIEWS_PATH}/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to update review');
-    const data = await res.json();
-    return data as Review;
-  }
+    }),
 
-  // Delete review
-  static async delete(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/reviews/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete review');
-  }
-}
+  /* ------------------------------ DELETE REVIEW ------------------------------ */
+  delete: (id: string): Promise<void> =>
+    apiFetch<void>(`${REVIEWS_PATH}/${id}`, {
+      method: 'DELETE',
+    }),
+};

@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { X, ImagePlus, GripVertical } from 'lucide-react';
 import Image from 'next/image';
 import type { ProductImage } from '@/types/product';
+import { apiFetch } from '@/lib/api';
 
 interface ImageUploaderProps {
   value: ProductImage[];
@@ -27,13 +28,12 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
   /* ---------------------------- GET SIGNATURE ---------------------------- */
   const getSignature = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/upload/signature', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to get signature');
-      return await res.json();
+      return apiFetch<{
+        timestamp: number;
+        signature: string;
+        apiKey: string;
+        cloudName: string;
+      }>('/api/upload/signature');
     } catch (err) {
       console.error('Failed to get signature', err);
       throw err;

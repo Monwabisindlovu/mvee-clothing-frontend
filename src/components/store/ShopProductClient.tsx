@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Product } from '@/types/product';
-import { apiFetch } from '@/lib/api';
+import { ProductService } from '@/services/product.service';
 import ShopProductView from './ShopProductView';
 
 export default function ShopProductClient({ slug }: { slug: string }) {
@@ -14,7 +14,7 @@ export default function ShopProductClient({ slug }: { slug: string }) {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const data = await apiFetch<Product>(`/api/products/slug/${slug}`);
+        const data = await ProductService.getBySlug(slug);
         setProduct(data);
       } catch {
         setProduct(null);

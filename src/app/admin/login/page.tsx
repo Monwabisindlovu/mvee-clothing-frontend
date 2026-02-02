@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, User } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 import { X, Eye, EyeOff } from 'lucide-react';
 
 interface UserResponse {
@@ -15,7 +16,7 @@ interface UserResponse {
 interface LoginResponse {
   token?: string;
   user?: UserResponse;
-  message?: string; // optional backend error message
+  message?: string;
 }
 
 export default function AdminLoginPage() {
@@ -42,24 +43,20 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const data = await apiFetch<LoginResponse>('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: { email, password },
       });
 
-      const data: LoginResponse = await res.json();
-
-      if (!res.ok || !data.token || !data.user) {
+      if (!data.token || !data.user) {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Ensure user object matches AuthContext's User type
       const user: User = {
         id: data.user.id,
         email: data.user.email,
         role: data.user.role,
-        name: data.user.name || 'Admin', // fallback if name missing
+        name: data.user.name || 'Admin',
       };
 
       if (user.role !== 'admin') {
@@ -68,7 +65,7 @@ export default function AdminLoginPage() {
 
       loginAsAdmin(data.token, user);
       router.push('/admin/dashboard');
-    } catch (err: unknown) {
+    } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -82,7 +79,6 @@ export default function AdminLoginPage() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
-        {/* Close button */}
         <button
           onClick={() => router.back()}
           className="absolute right-3 top-3 rounded p-1 hover:bg-neutral-100"
