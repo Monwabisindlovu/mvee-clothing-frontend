@@ -49,7 +49,6 @@ const PRESET_TYPES = [
   'women-heels',
   'women-handbags',
   'women-formal-shoes',
-  'accessories',
 ];
 
 interface ProductFormProps {
