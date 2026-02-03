@@ -15,19 +15,19 @@ export const ProductService = {
   /* ------------------------------ GET PRODUCT BY SLUG (FRONTEND) ------------------------------ */
   getBySlug: (slug: string) => apiFetch<Product>(`${PRODUCTS_PATH}/slug/${slug}`),
 
-  /* ------------------------------ CREATE PRODUCT -------------------------------- */
-  create: (data: Partial<Product>) =>
-    apiFetch<Product>(PRODUCTS_PATH, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+ /* ------------------------------ CREATE PRODUCT -------------------------------- */
+create: (data: Partial<Product>) =>
+  apiFetch<Product>(PRODUCTS_PATH, {
+    method: 'POST',
+    body: data,
+  }),
 
-  /* ------------------------------ UPDATE PRODUCT -------------------------------- */
-  update: (id: string, data: Partial<Product>) =>
-    apiFetch<Product>(`${PRODUCTS_PATH}/${id}`, {
-      method: 'PUT', // ← changed from PATCH to PUT
-      body: JSON.stringify(data),
-    }),
+/* ------------------------------ UPDATE PRODUCT -------------------------------- */
+update: (id: string, data: Partial<Product>) =>
+  apiFetch<Product>(`${PRODUCTS_PATH}/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
 
   /* ------------------------------ DELETE PRODUCT -------------------------------- */
   delete: (id: string) =>
