@@ -20,7 +20,7 @@ export class OrderService {
   static update(id: string, payload: Partial<Order>): Promise<Order> {
     return apiFetch<Order>(`${ORDERS_PATH}/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify(payload),
+      body: payload,
     });
   }
 

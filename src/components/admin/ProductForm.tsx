@@ -128,35 +128,34 @@ export default function ProductForm({ productId }: ProductFormProps) {
       is_on_promotion: product.is_on_promotion,
     });
   }, [product]);
-
-  /* ---------------------------- Mutations ---------------------------- */
-  const createMutation = useMutation<Product, Error, Partial<Product>>({
-    mutationFn: data =>
-      apiFetch<Product>('/api/products', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast.success('Product created');
-      router.push('/admin/products');
-    },
-    onError: () => toast.error('Failed to create product'),
-  });
+const createMutation = useMutation<Product, Error, Partial<Product>>({
+  mutationFn: data =>
+    apiFetch<Product>('/api/products', {
+      method: 'POST',
+      body: data,
+    }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    toast.success('Product created');
+    router.push('/admin/products');
+  },
+  onError: () => toast.error('Failed to create product'),
+});
 
   const updateMutation = useMutation<Product, Error, Partial<Product>>({
-    mutationFn: data =>
-      apiFetch<Product>(`/api/products/${productId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast.success('Product updated');
-      router.push('/admin/products');
-    },
-    onError: () => toast.error('Failed to update product'),
-  });
+  mutationFn: data =>
+    apiFetch<Product>(`/api/products/${productId}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    toast.success('Product updated');
+    router.push('/admin/products');
+  },
+  onError: () => toast.error('Failed to update product'),
+});
+
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 

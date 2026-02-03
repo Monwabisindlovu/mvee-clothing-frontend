@@ -10,7 +10,7 @@ export const CategoryService = {
   create: (data: Partial<Category>): Promise<Category> =>
     apiFetch<Category>('/api/categories', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data,
     }),
 
   /* ------------------------------ DELETE CATEGORY ------------------------------ */

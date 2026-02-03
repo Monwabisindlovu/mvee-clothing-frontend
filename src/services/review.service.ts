@@ -13,10 +13,11 @@ export const ReviewService = {
 
   /* ------------------------------ UPDATE REVIEW ------------------------------ */
   update: (id: string, payload: Partial<Review>): Promise<Review> =>
-    apiFetch<Review>(`${REVIEWS_PATH}/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    }),
+  apiFetch<Review>(`${REVIEWS_PATH}/${id}`, {
+    method: 'PATCH',
+    body: payload,
+  }),
+
 
   /* ------------------------------ DELETE REVIEW ------------------------------ */
   delete: (id: string): Promise<void> =>
